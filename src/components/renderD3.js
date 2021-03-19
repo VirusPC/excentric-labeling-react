@@ -1,7 +1,8 @@
 import * as d3 from 'd3'
+import { min } from 'd3';
 import data from "../data/cars.json"
 
-export default function renderD3(rootElem, width, fontSize, lensRadius) {
+export default function renderD3(rootElem, width, fontSize, lensRadius, setCurLabel, setRandomLabel) {
 
   let height = width * 0.6;
 
@@ -26,7 +27,7 @@ export default function renderD3(rootElem, width, fontSize, lensRadius) {
     .attr("viewbox", `0 0 ${width} ${height}`)
   const g = svg.append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  renderScatterPlot(g, width, height, data, fieldX, fieldY, fieldColor, {fontSize: fontSize, lensRadius: lensRadius});
+  renderScatterPlot(g, width, height, data, fieldX, fieldY, fieldColor, {fontSize: fontSize, lensRadius: lensRadius, setCurLabel: setCurLabel, setRandomLabel: setRandomLabel});
 }
 
 function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor, variableParams) {
@@ -172,15 +173,10 @@ function renderLegends(root, width, height, field, scaleColor) {
 }
 
 function renderOverlay(root, width, height, coordinates, variableParams) {
-  const radius = variableParams.lensRadius,//20,
-    fontSize = variableParams.fontSize,//10,
-    strokeColor = "green",
-    //countLabelHeight = 15,
+  const {lensRadius, fontSize, setCurLabel, setRandomLabel} = variableParams;
+  const strokeColor = "green",
     countLabelWidth = 30,
     countLabelDistance = 20;
-
-    console.log(radius);
-    console.log(fontSize);
 
   const text = root.append("text")
   const labelHeight = text
@@ -213,7 +209,7 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
     .attr("class", "lens")
     .attr("cx", 0)
     .attr("cx", 0)
-    .attr("r", radius)
+    .attr("r", lensRadius)
     .attr("fill", "none")
     .attr("stroke", strokeColor)
     .attr("stroke-width", "2px")
@@ -221,22 +217,22 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
     .attr("stroke", strokeColor)
     .attr("stroke-width", "2px")
     .attr("fill", "none")
-    .attr("x", - countLabelWidth / 2)
-    .attr("y", - (radius + labelHeight + countLabelDistance))
+    .attr("x", - countLabelWidth >> 2)
+    .attr("y", - (lensRadius + labelHeight + countLabelDistance))
     .attr("width", countLabelWidth)
     .attr("height", labelHeight);
   const countLabel = groupLens
     .append("text")
     .attr("class", "countLabel")
     .attr("font-size", fontSize)
-    .attr("y", - (radius + countLabelDistance + 4))
+    .attr("y", - (lensRadius + countLabelDistance + 4))
     .attr("text-anchor", "middle")
     .attr("stroke", strokeColor)
   groupLens.append("line")
     .attr("stroke", strokeColor)
     .attr("stroke-width", "2px")
-    .attr("y1", -radius)
-    .attr("y2", -(radius + countLabelDistance))
+    .attr("y1", -lensRadius)
+    .attr("y2", -(lensRadius+ countLabelDistance))
 
 
   function onMouseenter(e) {
@@ -249,8 +245,8 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
     const mousePosition = d3.pointer(e, groupOverlay.node());
     const mouseCoordinate = { x: mousePosition[0], y: mousePosition[1] };
 
-    const filteredCoords = extractLabelAndPosition(coordinates, mouseCoordinate, radius);
-    const lineCoords = computeInitialPosition(filteredCoords.slice(0, 10), mouseCoordinate, radius);
+    const {filteredCoords, nearestLabel, randomLabel} = extractLabelAndPosition(coordinates, mouseCoordinate, lensRadius);
+    const lineCoords = computeInitialPosition(filteredCoords.slice(0, 10), mouseCoordinate, lensRadius);
     const orderedLineCoords = computeOrdering(lineCoords);
     const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
     stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight);
@@ -259,6 +255,9 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
     groupTooltip.attr("transform", `translate(${mouseCoordinate.x}, ${mouseCoordinate.y})`)
     groupLabels.selectAll("*").remove();
     renderLabels(groupLabels, mouseCoordinate, groupedLineCoords, labelHeight, fontSize);
+
+    setCurLabel(nearestLabel)
+    setRandomLabel(randomLabel)
   }
 
   function onMouseleave(e) {
@@ -271,10 +270,39 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
  * step 1
  */
 function extractLabelAndPosition(coordinates, coordinateMouse, radius) {
-  const maxNum = 10;
   const distance = (coordinate1, coordinate2) => Math.sqrt((coordinate1.x - coordinate2.x) ** 2 + (coordinate1.y - coordinate2.y) ** 2);
-  return coordinates
-    .filter((coordinateDot) => distance(coordinateMouse, coordinateDot) < radius);
+
+  let nearestLabel = "";
+  let minDist = Number.MAX_VALUE;
+
+  const filteredCoords = coordinates
+    .filter((coordinateDot) => {
+      const dist = distance(coordinateMouse, coordinateDot) 
+      if(dist > radius) {
+        return false;
+      }
+      if(dist < minDist) {
+        minDist = dist;
+        nearestLabel = coordinateDot.label;
+      }
+      return true;
+    });
+
+  // let nearestLabel = filteredCoords[0] ? filteredCoords[0].label : "";
+  // let minDist = Number.MAX_VALUE;
+  // for(const coord of filteredCoords){
+  //   if(coord.dist < minDist){
+  //     minDist = coord.dist;
+  //     nearestLabel = coord.label;
+  //   }
+  // }
+  let randomLabel = "";
+  if(filteredCoords.length>0){
+    randomLabel = filteredCoords[Math.floor(Math.random() * (filteredCoords.length-1))].label
+  };
+
+
+  return {filteredCoords: filteredCoords, nearestLabel: nearestLabel, randomLabel: randomLabel};
 
 }
 

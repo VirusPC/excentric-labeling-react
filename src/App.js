@@ -17,6 +17,8 @@ function App() {
 
   const [fontSize, setFontSize] = useState(defaultFontSize);
   const [lensRadius, setLensRadius] = useState(defaultLensRadius);
+  const [curLabel, setCurLabel] = useState("");
+  const [randomLabel, setRadomLabel] = useState("");
 
   return (
     <div className="App" style={{width: width, height: height,}}>
@@ -56,7 +58,7 @@ function App() {
       </Row>
       <Row justify="center">
         <Col span={24}>
-          <Canvas width={width} fontSize={fontSize} lensRadius={lensRadius}></Canvas>
+          <Canvas width={width} fontSize={fontSize} lensRadius={lensRadius} setCurLabel={setCurLabel} setRadomLabel={setRadomLabel}></Canvas>
         </Col>
       </Row>
       <Row justify="center" align="middle">
@@ -65,8 +67,8 @@ function App() {
             Name:
             </Text>
         </Col>
-        <Col span={3}>
-          <Input></Input>
+        <Col span={6}>
+          <Input value={curLabel} disabled={true}></Input>
         </Col>
         <Col span={1}>
         </Col>
@@ -75,8 +77,8 @@ function App() {
             random items:
             </Text>
         </Col>
-        <Col span={3}>
-          <Input></Input>
+        <Col span={6}>
+          <Input value={randomLabel} disabled={true}></Input>
         </Col>
       </Row>
     </div>
