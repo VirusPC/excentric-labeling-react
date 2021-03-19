@@ -1,14 +1,9 @@
 import * as d3 from 'd3'
-import { min } from 'd3';
 import data from "../data/cars.json"
 
 export default function renderD3(rootElem, width, fontSize, lensRadius, setCurLabel, setRandomLabel) {
 
   let height = width * 0.6;
-
-  // fields to bin
-  const keys = ['Cylinders', 'Displacement', 'Weight_in_lbs', 'Acceleration']; // Can choosen from one of the properties.
-
 
   // fields of scatter plot
   const fieldX = "Horsepower";
@@ -33,8 +28,6 @@ export default function renderD3(rootElem, width, fontSize, lensRadius, setCurLa
 function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor, variableParams) {
   // settings
   const radius = 3;
-  const colorHidden = "#ddd";
-  const tooltipFields = ['Miles_per_Gallon', 'Cylinders', 'Displacement', 'Horsepower', 'Weight_in_lbs', 'Acceleration', 'Name'];
 
   // layout
   const margin = { top: 10, right: 100, bottom: 50, left: 50 };
@@ -89,10 +82,6 @@ function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor
   const groupLegends = root.append("g")
     .attr("class", "groupLegends")
     .attr("transform", `translate(${margin.left + width}, ${margin.top})`)
-  const groupTooltip = root.append("g")
-    .attr("class", "tooltip")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  //.attr("display", "none")
 
   // draw
   groupAxisX.call(d3.axisBottom(scaleX))
@@ -167,7 +156,7 @@ function renderLegends(root, width, height, field, scaleColor) {
     .attr("fill", "none")
     .attr("stroke-width", 2)
     .attr("stroke", d => scaleColor(d))
-    .attr("cx", width / 2)
+    .attr("cx", width >> 1)
     .attr("cy", d => scaleY(d))
     .attr("r", radius);
 }
@@ -196,7 +185,6 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
     .attr("class", "groupOverlay ")
   const groupLens = groupTooltip.append("g")
     .attr("class", "groupLens");
-  //.attr("transform", `translate(${offsetX}, ${offsetY})`)
 
   groupOverlay.append("rect")
     .attr("width", width)
@@ -217,7 +205,7 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
     .attr("stroke", strokeColor)
     .attr("stroke-width", "2px")
     .attr("fill", "none")
-    .attr("x", - countLabelWidth >> 2)
+    .attr("x", - countLabelWidth >> 1)
     .attr("y", - (lensRadius + labelHeight + countLabelDistance))
     .attr("width", countLabelWidth)
     .attr("height", labelHeight);
@@ -236,8 +224,6 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
 
 
   function onMouseenter(e) {
-    //debugger
-    const rect = root.node().getBoundingClientRect();
     groupTooltip.style("visibility", "visible")
   }
 
@@ -412,13 +398,13 @@ function assignLabelToLeftOrRight(lineCoordinates) {
 function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) {
   const horizontalMargin = 50;
   const verticalMargin = 1;
-  labelHeight = labelHeight + (verticalMargin << 1);
-  const halfLabelHeight = labelHeight / 2;
+  labelHeight = labelHeight + (verticalMargin >> 1);
+  const halfLabelHeight = labelHeight >> 1;
 
   const leftCoords = groupedLineCoords.left;
   const leftStackHeight = leftCoords.length * labelHeight;
   const leftX = mouseCoordinate.x - horizontalMargin;
-  const leftStartY = mouseCoordinate.y - (leftStackHeight / 2);
+  const leftStartY = mouseCoordinate.y - (leftStackHeight >> 1);
   for (let i = 0; i < leftCoords.length; i++) {
     const coord = leftCoords[i];
     coord.controlPoints.push({
@@ -430,7 +416,7 @@ function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) 
   const rightCoords = groupedLineCoords.right;
   const rightStackHeight = rightCoords.length * labelHeight;
   const rightX = mouseCoordinate.x + horizontalMargin;
-  const rightStartY = mouseCoordinate.y + (rightStackHeight / 2);
+  const rightStartY = mouseCoordinate.y + (rightStackHeight >> 1);
   for (let i = 0; i < rightCoords.length; i++) {
     const coord = rightCoords[i];
     coord.controlPoints.push({
@@ -446,10 +432,6 @@ function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) 
 
 // with bug
 function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fontSize) {
-  const strokeWidth = 2;
-
-  const scaleColor1 = d3.scaleSequential().domain([-2, 10]).interpolator(d3.interpolateReds);
-  const scaleColor2 = d3.scaleSequential().domain([-2, 10]).interpolator(d3.interpolateBlues);
 
   const lineGenerator = d3.line().x(d => d.x).y(d => d.y);
 
@@ -468,15 +450,14 @@ function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fon
         x: d.controlPoints[d.controlPoints.length - 1].x,
         y: d.controlPoints[d.controlPoints.length - 1].y,
       }
-      const path = g.append("path")
+      g.append("path")
         .attr("d", lineGenerator(d.controlPoints))
         .attr("stroke", d.color)
         .attr("stroke-width", "2px")
         .attr("fill", "none")
 
       let clientRect;
-      const text = g
-        .append("text")
+      g.append("text")
         .text(d.label)
         .attr("stroke", d.color)
         .attr("stroke-width", 1)
@@ -485,12 +466,12 @@ function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fon
         .attr("x", endPoint.x)
         .attr("y", function () {
           clientRect = this.getBoundingClientRect()
-          return endPoint.y + clientRect.height / 2;
+          return endPoint.y + (clientRect.height >> 1);
         })
 
       g.append("rect")
         .attr('x', endPoint.x - clientRect.width)
-        .attr('y', endPoint.y - clientRect.height / 2 + 3)
+        .attr('y', endPoint.y - (clientRect.height >> 1) + 3)
         .attr("width", clientRect.width)
         .attr("height", clientRect.height)
         .attr("stroke", d.color)
@@ -509,15 +490,14 @@ function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fon
         x: d.controlPoints[d.controlPoints.length - 1].x,
         y: d.controlPoints[d.controlPoints.length - 1].y,
       }
-      const path = g.append("path")
+      g.append("path")
         .attr("d", lineGenerator(d.controlPoints))
         .attr("stroke", d.color)
         .attr("stroke-width", "2px")
         .attr("fill", "none")
 
       let clientRect;
-      const text = g
-        .append("text")
+      g.append("text")
         .text(d.label)
         .attr("stroke", d.color)
         .attr("stroke-width", 1)
@@ -526,12 +506,12 @@ function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fon
         .attr("x", endPoint.x)
         .attr("y", function () {
           clientRect = this.getBoundingClientRect()
-          return endPoint.y + clientRect.height / 2;
+          return endPoint.y + (clientRect.height >> 1);
         })
 
       g.append("rect")
         .attr('x', endPoint.x)
-        .attr('y', endPoint.y - clientRect.height / 2 + 3)
+        .attr('y', endPoint.y - (clientRect.height >> 1) + 3)
         .attr("width", clientRect.width)
         .attr("height", clientRect.height)
         .attr("stroke", d.color)

@@ -6,10 +6,6 @@ export default class Canvas extends Component {
 
   root = createRef();
 
-  constructor(params) {
-    super(params);
-  }
-
   render() {
     
     return (

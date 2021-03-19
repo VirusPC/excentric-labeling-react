@@ -1,5 +1,5 @@
 import Canvas from "./components/Canvas"
-import { Slider, Typography, Layout, Input, Space, Row, Col } from 'antd'
+import { Slider, Typography, Input, Row, Col } from 'antd'
 // import { Content, Footer, Header } from "antd/lib/layout/layout";
 import 'antd/dist/antd.css'
 import "./App.css"
