@@ -102,7 +102,7 @@ function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor
     .data(coordinatesWithInfo)
     .join("circle")
     .attr("fill", "none")
-    .attr("stroke-width", 2)
+    .attr("stroke-width", 1)
     .attr("stroke", d => d["color"])
     .attr("cx", d => d["x"])
     .attr("cy", d => d["y"])
@@ -162,6 +162,7 @@ function renderLegends(root, width, height, field, scaleColor) {
 function renderOverlay(root, width, height, coordinates, variableParams) {
   const {lensRadius, fontSize, setCurLabel, setRandomLabel} = variableParams;
   const strokeColor = "green",
+    strokeWidth = "1px",
     countLabelWidth = 30,
     countLabelDistance = 20;
 
@@ -198,10 +199,10 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
     .attr("r", lensRadius)
     .attr("fill", "none")
     .attr("stroke", strokeColor)
-    .attr("stroke-width", "2px")
+    .attr("stroke-width", strokeWidth)
   groupLens.append("rect")
     .attr("stroke", strokeColor)
-    .attr("stroke-width", "2px")
+    .attr("stroke-width", strokeWidth)
     .attr("fill", "none")
     .attr("x", - countLabelWidth >> 1)
     .attr("y", - (lensRadius + labelHeight + countLabelDistance))
@@ -213,10 +214,10 @@ function renderOverlay(root, width, height, coordinates, variableParams) {
     .attr("font-size", fontSize)
     .attr("y", - (lensRadius + countLabelDistance + 4))
     .attr("text-anchor", "middle")
-    .attr("stroke", strokeColor)
+    .attr("fill", strokeColor)
   groupLens.append("line")
     .attr("stroke", strokeColor)
-    .attr("stroke-width", "2px")
+    .attr("stroke-width", strokeWidth)
     .attr("y1", -lensRadius)
     .attr("y2", -(lensRadius+ countLabelDistance))
 
@@ -430,6 +431,7 @@ function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) 
 
 // with bug
 function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fontSize) {
+  const strokeWidth = "1px";
 
   const lineGenerator = d3.line().x(d => d.x).y(d => d.y);
 
@@ -451,14 +453,13 @@ function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fon
       g.append("path")
         .attr("d", lineGenerator(d.controlPoints))
         .attr("stroke", d.color)
-        .attr("stroke-width", "2px")
+        .attr("stroke-width", strokeWidth)
         .attr("fill", "none")
 
       let clientRect;
       g.append("text")
         .text(d.label)
-        .attr("stroke", d.color)
-        .attr("stroke-width", 1)
+        .attr("fill", d.color)
         .attr("font-size", fontSize)
         .attr("text-anchor", "end")
         .attr("x", endPoint.x)
@@ -473,7 +474,7 @@ function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fon
         .attr("width", clientRect.width)
         .attr("height", clientRect.height)
         .attr("stroke", d.color)
-        .attr("stroke-width", 1)
+        .attr("stroke-width", strokeWidth)
         .attr("fill", "none");
     })
 
@@ -491,14 +492,13 @@ function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fon
       g.append("path")
         .attr("d", lineGenerator(d.controlPoints))
         .attr("stroke", d.color)
-        .attr("stroke-width", "2px")
+        .attr("stroke-width", strokeWidth)
         .attr("fill", "none")
 
       let clientRect;
       g.append("text")
         .text(d.label)
-        .attr("stroke", d.color)
-        .attr("stroke-width", 1)
+        .attr("fill", d.color)
         .attr("font-size", fontSize)
         .attr("text-anchor", "start")
         .attr("x", endPoint.x)
@@ -513,7 +513,7 @@ function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fon
         .attr("width", clientRect.width)
         .attr("height", clientRect.height)
         .attr("stroke", d.color)
-        .attr("stroke-width", 1)
+        .attr("stroke-width", strokeWidth)
         .attr("fill", "none")
     })
 }
