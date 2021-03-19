@@ -29,9 +29,9 @@ export default class Canvas extends Component {
   }
 
   componentDidUpdate = () => {
-    const {width, fontSize, lensRadius, setCurLabel} = this.props;
+    const { width, fontSize, lensRadius } = this.props;
     const rootElem = this.root.current;
-    d3.select(rootElem).selectAll(":scope > *").remove();
+    d3.select(rootElem).selectAll(":root *").remove();
     renderD3(rootElem, width, fontSize, lensRadius, this.setCurLabel, this.setRandomLabel);
   }
 

@@ -112,8 +112,6 @@ function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor
 }
 
 function renderLegends(root, width, height, field, scaleColor) {
-  console.log(width)
-  console.log(height)
   // settings
   const radius = 4;
 

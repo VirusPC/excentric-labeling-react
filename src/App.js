@@ -4,6 +4,7 @@ import { Slider, Typography, Input, Row, Col } from 'antd'
 import 'antd/dist/antd.css'
 import "./App.css"
 import { useState } from 'react'
+import _ from 'lodash'
 
 const { Title, Text } = Typography;
 
@@ -12,13 +13,25 @@ const { Title, Text } = Typography;
 function App() {
   const width = 800;
   const height = 1000;
+
+  const minFontSize = 5;
+  const maxFontSize = 20;
   const defaultFontSize = 10;
+  const fontSizeStep = 1;
+
+  const minLensRadius= 10;
+  const maxLensRadius= 30;
   const defaultLensRadius = 20;
+  const lensRadiusStep = 1;
 
   const [fontSize, setFontSize] = useState(defaultFontSize);
   const [lensRadius, setLensRadius] = useState(defaultLensRadius);
   const [curLabel, setCurLabel] = useState("");
   const [randomLabel, setRadomLabel] = useState("");
+
+  const fontSizeSliderMarks = {};
+  const a = _.range(minFontSize, maxFontSize + 1, 1);
+  //cosnt 
 
   return (
     <div className="App" style={{width: width, height: height,}}>
@@ -30,13 +43,13 @@ function App() {
             Font Size
             </Text>
         </Col>
-        <Col span={10}>
+        <Col span={13}>
           <Slider 
             defaultValue={defaultFontSize} 
-            min={5} 
-            max={20} 
+            min={minFontSize} 
+            max={maxFontSize} 
             step={1} 
-            dots={true} 
+            //dots={true} 
             onChange={setFontSize}/>
         </Col>
       </Row>
@@ -46,13 +59,13 @@ function App() {
             Radius
           </Text>
         </Col>
-        <Col span={10}>
+        <Col span={13}>
           <Slider 
             defaultValue={defaultLensRadius} 
-            min={10} 
-            max={30} 
+            min={minLensRadius} 
+            max={maxLensRadius} 
             step={1} 
-            dots={true}
+            dots={false}
             onChange = {setLensRadius}/>
         </Col>
       </Row>
