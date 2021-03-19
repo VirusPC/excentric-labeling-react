@@ -32,7 +32,7 @@ export default class Canvas extends Component {
     const {width, fontSize, lensRadius, setCurLabel} = this.props;
     const rootElem = this.root.current;
     d3.select(rootElem).selectAll(":scope > *").remove();
-    renderD3(rootElem, width, fontSize, lensRadius, setCurLabel, this.setCurLabel, this.setRandomLabel);
+    renderD3(rootElem, width, fontSize, lensRadius, this.setCurLabel, this.setRandomLabel);
   }
 
   setCurLabel = (value) => {

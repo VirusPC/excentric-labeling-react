@@ -27,10 +27,10 @@ function App() {
       <Row justify="center" align="middle">
         <Col span={3}>
           <Text strong>
-            font size
+            Font Size
             </Text>
         </Col>
-        <Col span={7}>
+        <Col span={10}>
           <Slider 
             defaultValue={defaultFontSize} 
             min={5} 
@@ -43,10 +43,10 @@ function App() {
       <Row justify="center" align="middle">
         <Col span={3}>
           <Text strong>
-            lens radius
+            Radius
           </Text>
         </Col>
-        <Col span={7}>
+        <Col span={10}>
           <Slider 
             defaultValue={defaultLensRadius} 
             min={10} 
@@ -74,7 +74,7 @@ function App() {
         </Col>
         <Col span={3}>
           <Text strong>
-            random items:
+            Random Items:
             </Text>
         </Col>
         <Col span={6}>
