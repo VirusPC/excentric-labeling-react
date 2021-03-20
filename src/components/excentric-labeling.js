@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import { text } from "d3";
 
 /**
  * Add excentric labeling interaction to the root element. 
@@ -25,15 +26,6 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     strokeWidth = "1px",
     countLabelWidth = 30,
     countLabelDistance = 20;
-
-  // const text = root.append("text")
-  // const labelHeight = text
-  //   .text("test")
-  //   .attr("font-size", fontSize)
-  //   .node()
-  //   .getBoundingClientRect()
-  //   .height;
-  // text.remove();
 
   const groupTooltip = root.append("g")
     .attr("class", "groupTooltip ")
@@ -64,7 +56,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     .attr("stroke", strokeColor)
     .attr("stroke-width", strokeWidth)
     .attr("y1", -lensRadius)
-    .attr("y2", -(lensRadius+ countLabelDistance))
+    .attr("y2", -(lensRadius + countLabelDistance))
   const countLabel = groupLens
     .append("text")
     .text("0")
@@ -93,7 +85,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     const mousePosition = d3.pointer(e, groupOverlay.node());
     const mouseCoordinate = { x: mousePosition[0], y: mousePosition[1] };
 
-    const {filteredCoords, nearestLabel, randomLabel} = extractLabelAndPosition(coordinates, mouseCoordinate, lensRadius);
+    const { filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(coordinates, mouseCoordinate, lensRadius);
     const lineCoords = computeInitialPosition(filteredCoords.slice(0, 10), mouseCoordinate, lensRadius);
     const orderedLineCoords = computeOrdering(lineCoords);
     const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
@@ -103,6 +95,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     groupTooltip.attr("transform", `translate(${mouseCoordinate.x}, ${mouseCoordinate.y})`)
     groupLabels.selectAll("*").remove();
     renderLabels(groupLabels, groupedLineCoords, fontSize);
+    translateLables(groupLabels);
 
     setCurLabel(nearestLabel)
     setRandomLabel(randomLabel)
@@ -125,11 +118,11 @@ function extractLabelAndPosition(coordinates, coordinateMouse, radius) {
 
   const filteredCoords = coordinates
     .filter((coordinateDot) => {
-      const dist = distance(coordinateMouse, coordinateDot) 
-      if(dist > radius) {
+      const dist = distance(coordinateMouse, coordinateDot)
+      if (dist > radius) {
         return false;
       }
-      if(dist < minDist) {
+      if (dist < minDist) {
         minDist = dist;
         nearestLabel = coordinateDot.label;
       }
@@ -137,11 +130,11 @@ function extractLabelAndPosition(coordinates, coordinateMouse, radius) {
     });
 
   let randomLabel = "";
-  if(filteredCoords.length>0){
-    randomLabel = filteredCoords[Math.floor(Math.random() * (filteredCoords.length-1))].label
+  if (filteredCoords.length > 0) {
+    randomLabel = filteredCoords[Math.floor(Math.random() * (filteredCoords.length - 1))].label
   };
 
-  return {filteredCoords: filteredCoords, nearestLabel: nearestLabel, randomLabel: randomLabel};
+  return { filteredCoords: filteredCoords, nearestLabel: nearestLabel, randomLabel: randomLabel };
 
 }
 
@@ -150,7 +143,6 @@ function extractLabelAndPosition(coordinates, coordinateMouse, radius) {
  * step 2
  * project dot to the most recently position on lens circle.
  */
-
 function computeInitialPosition(coordinates, mouseCoordinate, radius) {
   const lineCoordinates = [];
   for (let i = 0; i < coordinates.length; i++) {
@@ -343,4 +335,35 @@ function renderLabels(root, groupedLineCoords, fontSize) {
         .attr("stroke-width", strokeWidth)
         .attr("fill", "none")
     })
+}
+
+function translateLables(root) {
+  const groupLeft = root.select(".left");
+  const groupItems = groupLeft.selectAll(":scope>g");
+  const texts = groupItems.selectAll(":scope>text")
+  //const rects = groupItems.selectAll(":scope>rect")
+  let maxLabelWidth = 0;
+  const widths = [];
+  texts.each(function () {
+    const curWidth = this.getBoundingClientRect().width;
+    widths.push(curWidth);
+    if (curWidth > maxLabelWidth) maxLabelWidth = curWidth;
+  });
+  groupItems.each(function(){
+    const g = d3.select(this);
+    const text  = g.select("text")
+    const { width, height } = text.node().getBoundingClientRect();
+    const offset = width-maxLabelWidth
+    text.attr("transform", `translate(${offset}, 0)`)
+    const rect = g.select("rect");
+
+    rect.attr("transform", `translate(${offset}, 0)`)
+    console.log(+text.attr("y") + height/2)
+    const line = g.append("line")
+      .attr("x1", text.attr("x"))
+      .attr("y1", +text.attr("y") - height/2)
+      .attr("x2", +text.attr("x") + offset)
+      .attr("y2", +text.attr("y") - height/2)
+      .attr("stroke", text.attr("fill"))
+  });
 }
