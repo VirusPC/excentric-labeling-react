@@ -1,7 +1,26 @@
 import * as d3 from "d3";
 
-export default function addExcenricLabelingInteraction(root, width, height, coordinates, variableParams) {
-  const {lensRadius, fontSize, setCurLabel, setRandomLabel} = variableParams;
+/**
+ * Add excentric labeling interaction to the root element. 
+ * 
+ * @param {SVGGElement} root svg group element to mount
+ * @param {number} width 
+ * @param {number} height 
+ * 
+ * @param {object} coordinates
+ * @param {number} coordinates.x
+ * @param {number} coordinates.y
+ * @param {string} coordinates.label
+ * @param {string} coordinates.color
+ * 
+ * @param {object} interactionParams 
+ * @param {string | number} interactionParams.lensRadius 
+ * @param {string | number} interactionParams.fontSize
+ * @param {Function} interactionParams.setCurLabel
+ * @param {function} interactionParams.setRandomLabel
+ */
+export default function addExcenricLabelingInteraction(root, width, height, coordinates, interactionParams) {
+  const {lensRadius, fontSize, setCurLabel, setRandomLabel} = interactionParams;
   const strokeColor = "green",
     strokeWidth = "1px",
     countLabelWidth = 30,

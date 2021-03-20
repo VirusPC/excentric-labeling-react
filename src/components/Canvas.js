@@ -10,15 +10,15 @@ export default class Canvas extends Component {
     
     return (
     <>
-      <svg id="canvas"  ref={this.root}></svg>
+      <div id="canvas"  ref={this.root}></div>
     </>
     );
   }
   
   componentDidMount = () => {
-    const {width, fontSize, lensRadius} = this.props;
+    const { width } = this.props;
     const rootElem = this.root.current;
-    renderUsingD3(rootElem, width, fontSize, lensRadius, this.setCurLabel, this.setRandomLabel);
+    renderUsingD3(rootElem, width, width * 0.6, this.extractInteractionParams(this.props));
   }
 
   shouldComponentUpdate = (props, state) => {
@@ -29,10 +29,11 @@ export default class Canvas extends Component {
   }
 
   componentDidUpdate = () => {
-    const { width, fontSize, lensRadius } = this.props;
+      console.log("update")
+    const { width } = this.props;
     const rootElem = this.root.current;
     d3.select(rootElem).selectAll(":root *").remove();
-    renderUsingD3(rootElem, width, fontSize, lensRadius, this.setCurLabel, this.setRandomLabel);
+    renderUsingD3(rootElem, width, width * 0.6, this.extractInteractionParams(this.props));
   }
 
   setCurLabel = (value) => {
@@ -43,6 +44,16 @@ export default class Canvas extends Component {
   setRandomLabel = (value) => {
     const setRandomLabel= this.props.setRadomLabel;
     setRandomLabel(value);
+  }
+
+  extractInteractionParams(props) {
+    const {fontSize, lensRadius} = props;
+    return {
+      fontSize: fontSize, 
+      lensRadius: lensRadius, 
+      setCurLabel: this.setCurLabel, 
+      setRandomLabel: this.setRandomLabel
+    }
   }
 
 

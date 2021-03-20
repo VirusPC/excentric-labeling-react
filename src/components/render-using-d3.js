@@ -2,9 +2,18 @@ import * as d3 from 'd3'
 import data from "../data/cars.json"
 import addExcenricLabelingInteraction  from "./excentric-labeling"
 
-export default function renderUsingD3(rootElem, width, fontSize, lensRadius, setCurLabel, setRandomLabel) {
-
-  let height = width * 0.6;
+/**
+ * 
+ * @param {HTMLDivElement} rootElem
+ * @param {number} width 
+ * @param {number} height 
+ * @param {object} interactionParams
+ * @param {string | number} interactionParams.lensRadius 
+ * @param {string | number} interactionParams.fontSize
+ * @param {Function} interactionParams.setCurLabel
+ * @param {function} interactionParams.setRandomLabel
+ */
+export default function renderUsingD3(rootElem, width, height, interactionParams) {
 
   // fields of scatter plot
   const fieldX = "Horsepower";
@@ -18,15 +27,16 @@ export default function renderUsingD3(rootElem, width, fontSize, lensRadius, set
 
 
   const svg = d3.select(rootElem)
+    .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .attr("viewbox", `0 0 ${width} ${height}`)
   const g = svg.append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  renderScatterPlot(g, width, height, data, fieldX, fieldY, fieldColor, {fontSize: fontSize, lensRadius: lensRadius, setCurLabel: setCurLabel, setRandomLabel: setRandomLabel});
+  renderScatterPlot(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams);
 }
 
-function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor, variableParams) {
+function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor, interactionParams) {
   // settings
   const radius = 3;
 
@@ -108,8 +118,10 @@ function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor
     .attr("cx", d => d["x"])
     .attr("cy", d => d["y"])
     .attr("r", radius)
+
   groupLegends.call(renderLegends, margin.right, height + margin.top + margin.left, fieldColor, scaleColor);
-  groupForeground.call(addExcenricLabelingInteraction, width, height, coordinatesWithInfo, variableParams);
+
+  groupForeground.call(addExcenricLabelingInteraction, width, height, coordinatesWithInfo, interactionParams);
 }
 
 function renderLegends(root, width, height, field, scaleColor) {
