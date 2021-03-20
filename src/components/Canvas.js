@@ -1,6 +1,6 @@
 import { Component, createRef } from 'react';
 import * as d3 from 'd3';
-import renderD3 from './renderD3'
+import renderUsingD3 from './render-using-d3'
 
 export default class Canvas extends Component {
 
@@ -18,7 +18,7 @@ export default class Canvas extends Component {
   componentDidMount = () => {
     const {width, fontSize, lensRadius} = this.props;
     const rootElem = this.root.current;
-    renderD3(rootElem, width, fontSize, lensRadius, this.setCurLabel, this.setRandomLabel);
+    renderUsingD3(rootElem, width, fontSize, lensRadius, this.setCurLabel, this.setRandomLabel);
   }
 
   shouldComponentUpdate = (props, state) => {
@@ -32,7 +32,7 @@ export default class Canvas extends Component {
     const { width, fontSize, lensRadius } = this.props;
     const rootElem = this.root.current;
     d3.select(rootElem).selectAll(":root *").remove();
-    renderD3(rootElem, width, fontSize, lensRadius, this.setCurLabel, this.setRandomLabel);
+    renderUsingD3(rootElem, width, fontSize, lensRadius, this.setCurLabel, this.setRandomLabel);
   }
 
   setCurLabel = (value) => {
