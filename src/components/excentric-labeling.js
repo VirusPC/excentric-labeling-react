@@ -17,23 +17,23 @@ import * as d3 from "d3";
  * @param {string | number} interactionParams.lensRadius 
  * @param {string | number} interactionParams.fontSize
  * @param {Function} interactionParams.setCurLabel
- * @param {function} interactionParams.setRandomLabel
+ * @param {Function} interactionParams.setRandomLabel
  */
 export default function addExcenricLabelingInteraction(root, width, height, coordinates, interactionParams) {
-  const {lensRadius, fontSize, setCurLabel, setRandomLabel} = interactionParams;
+  const { lensRadius, fontSize, setCurLabel, setRandomLabel } = interactionParams;
   const strokeColor = "green",
     strokeWidth = "1px",
     countLabelWidth = 30,
     countLabelDistance = 20;
 
-  const text = root.append("text")
-  const labelHeight = text
-    .text("test")
-    .attr("font-size", fontSize)
-    .node()
-    .getBoundingClientRect()
-    .height;
-  text.remove();
+  // const text = root.append("text")
+  // const labelHeight = text
+  //   .text("test")
+  //   .attr("font-size", fontSize)
+  //   .node()
+  //   .getBoundingClientRect()
+  //   .height;
+  // text.remove();
 
   const groupTooltip = root.append("g")
     .attr("class", "groupTooltip ")
@@ -60,26 +60,29 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     .attr("fill", "none")
     .attr("stroke", strokeColor)
     .attr("stroke-width", strokeWidth)
-  groupLens.append("rect")
-    .attr("stroke", strokeColor)
-    .attr("stroke-width", strokeWidth)
-    .attr("fill", "none")
-    .attr("x", - countLabelWidth >> 1)
-    .attr("y", - (lensRadius + labelHeight + countLabelDistance))
-    .attr("width", countLabelWidth)
-    .attr("height", labelHeight);
-  const countLabel = groupLens
-    .append("text")
-    .attr("class", "countLabel")
-    .attr("font-size", fontSize)
-    .attr("y", - (lensRadius + countLabelDistance + 4))
-    .attr("text-anchor", "middle")
-    .attr("fill", strokeColor)
   groupLens.append("line")
     .attr("stroke", strokeColor)
     .attr("stroke-width", strokeWidth)
     .attr("y1", -lensRadius)
     .attr("y2", -(lensRadius+ countLabelDistance))
+  const countLabel = groupLens
+    .append("text")
+    .text("0")
+    .attr("class", "lensLabelText")
+    .attr("font-size", fontSize)
+    .attr("y", - (lensRadius + countLabelDistance + 4))
+    .attr("text-anchor", "middle")
+    .attr("fill", strokeColor);
+  const countLabelBoundingClientRect = countLabel.node().getBoundingClientRect();
+  groupLens.append("rect")
+    .attr("class", "lensLabelBorder")
+    .attr("stroke", strokeColor)
+    .attr("stroke-width", strokeWidth)
+    .attr("fill", "none")
+    .attr("x", - countLabelWidth >> 1)
+    .attr("y", - (lensRadius + countLabelBoundingClientRect.height + countLabelDistance))
+    .attr("width", countLabelWidth)
+    .attr("height", countLabelBoundingClientRect.height);
 
 
   function onMouseenter(e) {
@@ -94,12 +97,12 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     const lineCoords = computeInitialPosition(filteredCoords.slice(0, 10), mouseCoordinate, lensRadius);
     const orderedLineCoords = computeOrdering(lineCoords);
     const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
-    stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight);
+    stackAccordingToOrder(groupedLineCoords, mouseCoordinate, countLabelBoundingClientRect.height);
 
     countLabel.text(filteredCoords.length);
     groupTooltip.attr("transform", `translate(${mouseCoordinate.x}, ${mouseCoordinate.y})`)
     groupLabels.selectAll("*").remove();
-    renderLabels(groupLabels, mouseCoordinate, groupedLineCoords, labelHeight, fontSize);
+    renderLabels(groupLabels, groupedLineCoords, fontSize);
 
     setCurLabel(nearestLabel)
     setRandomLabel(randomLabel)
@@ -254,7 +257,7 @@ function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) 
 //function addLines() { }
 
 // with bug
-function renderLabels(root, mouseCoordinate, groupedLineCoords, labelHeight, fontSize) {
+function renderLabels(root, groupedLineCoords, fontSize) {
   const strokeWidth = "1px";
 
   const lineGenerator = d3.line().x(d => d.x).y(d => d.y);

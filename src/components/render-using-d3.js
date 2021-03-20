@@ -11,7 +11,7 @@ import addExcenricLabelingInteraction  from "./excentric-labeling"
  * @param {string | number} interactionParams.lensRadius 
  * @param {string | number} interactionParams.fontSize
  * @param {Function} interactionParams.setCurLabel
- * @param {function} interactionParams.setRandomLabel
+ * @param {Function} interactionParams.setRandomLabel
  */
 export default function renderUsingD3(rootElem, width, height, interactionParams) {
 
