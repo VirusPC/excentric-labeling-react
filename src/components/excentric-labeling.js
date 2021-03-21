@@ -1,5 +1,4 @@
 import * as d3 from "d3";
-import { text } from "d3";
 
 /**
  * Add excentric labeling interaction to the root element. 

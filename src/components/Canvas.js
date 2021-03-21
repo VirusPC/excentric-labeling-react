@@ -47,10 +47,11 @@ export default class Canvas extends Component {
   }
 
   extractInteractionParams(props) {
-    const {fontSize, lensRadius} = props;
+    const {fontSize, lensRadius, labelsNum} = props;
     return {
       fontSize: fontSize, 
       lensRadius: lensRadius, 
+      labelsNum: labelsNum,
       setCurLabel: this.setCurLabel, 
       setRandomLabel: this.setRandomLabel
     }

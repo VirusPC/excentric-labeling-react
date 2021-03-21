@@ -1,9 +1,10 @@
+import TopWidgets from "./components/TopWidgets"
 import Canvas from "./components/Canvas"
 import { Slider, Typography, Input, Row, Col } from 'antd'
 // import { Content, Footer, Header } from "antd/lib/layout/layout";
 import 'antd/dist/antd.css'
 import "./App.css"
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import _ from 'lodash'
 
 const { Title, Text } = Typography;
@@ -13,75 +14,119 @@ const { Title, Text } = Typography;
 const width = 800;
 const height = 1000;
 
-const minFontSize = 5;
-const maxFontSize = 20;
-const defaultFontSize = 10;
-const fontSizeStep = 1;
-const fontSizeSliderMarks = {};
-_.range(minFontSize, maxFontSize + 1, fontSizeStep)
-  .forEach((i) => fontSizeSliderMarks[i] = i);
+const sliderParams = {
+  fontSize: {
+    name: "Font Size",
+    min: 5,
+    max: 20,
+    default: 10,
+    step: 1,
+    marks: {},
+  },
+  lensRadius: {
+    name: "Radius",
+    min: 10,
+    max: 30,
+    default: 20,
+    step: 1,
+    marks: {},
+  },
+  labelsNum: {
+    name: "Max Num",
+    min: 1,
+    max: 15,
+    default: 10,
+    step: 1,
+    marks: {},
+  }
+};
 
-const minLensRadius = 10;
-const maxLensRadius = 30;
-const defaultLensRadius = 20;
-const lensRadiusStep = 1;
-const lensRadiusSliderMarks = {};
-_.range(minLensRadius, maxLensRadius + 1, lensRadiusStep)
-  .forEach((i) => lensRadiusSliderMarks[i] = i);
-
+for (const paramName in sliderParams) {
+  const param = sliderParams[paramName];
+  _.range(param.min, param.max + 1, param.step)
+    .forEach((i) => param.marks[i] = i);
+}
 
 function App() {
 
-  const [fontSize, setFontSize] = useState(defaultFontSize);
-  const [lensRadius, setLensRadius] = useState(defaultLensRadius);
+  const [fontSize, setFontSize] = useState(sliderParams.fontSize.default);
+  const [lensRadius, setLensRadius] = useState(sliderParams.lensRadius.default);
+  const [maxLabelsNum, setMaxLabelsNum] = useState(sliderParams.labelsNum.default);
   const [curLabel, setCurLabel] = useState("");
   const [randomLabel, setRadomLabel] = useState("");
-
-  //cosnt 
 
   return (
     <div className="App" style={{ width: width, height: height, }}>
       <Title align={"center"} level={2}>Excentric labels</Title>
       <br></br>
+
       <Row justify="center" align="middle">
         <Col span={2}>
           <Text strong>
-            Font Size
-            </Text>
-        </Col>
-        <Col span={13}>
-          <Slider
-            defaultValue={defaultFontSize}
-            min={minFontSize}
-            max={maxFontSize}
-            step={1}
-            //dots={true} 
-            marks={fontSizeSliderMarks}
-            onChange={setFontSize} />
-        </Col>
-      </Row>
-      <Row justify="center" align="middle">
-        <Col span={2}>
-          <Text strong>
-            Radius
+            {sliderParams.fontSize.name}
           </Text>
         </Col>
         <Col span={13}>
           <Slider
-            defaultValue={defaultLensRadius}
-            min={minLensRadius}
-            max={maxLensRadius}
-            step={1}
+            defaultValue={sliderParams.fontSize.default}
+            min={sliderParams.fontSize.min}
+            max={sliderParams.fontSize.max}
+            step={sliderParams.fontSize.step}
             dots={false}
-            marks={lensRadiusSliderMarks}
+            marks={sliderParams.fontSize.marks}
+            onChange={setFontSize} />
+        </Col>
+      </Row>
+
+      <Row justify="center" align="middle">
+        <Col span={2}>
+          <Text strong>
+            {sliderParams.lensRadius.name}
+          </Text>
+        </Col>
+        <Col span={13}>
+          <Slider
+            defaultValue={sliderParams.lensRadius.default}
+            min={sliderParams.lensRadius.min}
+            max={sliderParams.lensRadius.max}
+            step={sliderParams.lensRadius.step}
+            dots={false}
+            marks={sliderParams.lensRadius.marks}
             onChange={setLensRadius} />
         </Col>
       </Row>
-      <Row justify="center">
-        <Col span={24}>
-          <Canvas width={width} fontSize={fontSize} lensRadius={lensRadius} setCurLabel={setCurLabel} setRadomLabel={setRadomLabel}></Canvas>
+      
+      <Row justify="center" align="middle">
+        <Col span={2}>
+          <Text strong>
+            {sliderParams.labelsNum.name}
+          </Text>
+        </Col>
+        <Col span={13}>
+          <Slider
+            defaultValue={sliderParams.labelsNum.default}
+            min={sliderParams.labelsNum.min}
+            max={sliderParams.labelsNum.max}
+            step={sliderParams.labelsNum.step}
+            dots={false}
+            marks={sliderParams.labelsNum.marks}
+            onChange={setMaxLabelsNum} />
         </Col>
       </Row>
+
+      <Row justify="center">
+        <Col span={24}>
+          <Canvas 
+            width={width} 
+            fontSize={fontSize} 
+            lensRadius={lensRadius} 
+            maxLabelsNum={maxLabelsNum}
+            setCurLabel={setCurLabel} 
+            setRadomLabel={setRadomLabel}
+          ></Canvas>
+        </Col>
+      </Row>
+
       <Row justify="center" align="middle">
         <Col span={2}>
           <Text strong>
