@@ -1,10 +1,9 @@
-import TopWidgets from "./components/TopWidgets"
 import Canvas from "./components/Canvas"
 import { Slider, Typography, Input, Row, Col } from 'antd'
 // import { Content, Footer, Header } from "antd/lib/layout/layout";
 import 'antd/dist/antd.css'
 import "./App.css"
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import _ from 'lodash'
 
 const { Title, Text } = Typography;

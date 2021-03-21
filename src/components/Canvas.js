@@ -22,7 +22,9 @@ export default class Canvas extends Component {
   }
 
   shouldComponentUpdate = (props, state) => {
-    if(this.props.fontSize === props.fontSize && this.props.lensRadius === props.lensRadius){
+    if(this.props.fontSize === props.fontSize 
+        && this.props.lensRadius === props.lensRadius
+        && this.props.maxLabelsNum === props.maxLabelsNum){
       return false;
     } 
     return true;
@@ -47,11 +49,11 @@ export default class Canvas extends Component {
   }
 
   extractInteractionParams(props) {
-    const {fontSize, lensRadius, labelsNum} = props;
+    const {fontSize, lensRadius, maxLabelsNum} = props;
     return {
       fontSize: fontSize, 
       lensRadius: lensRadius, 
-      labelsNum: labelsNum,
+      maxLabelsNum: maxLabelsNum,
       setCurLabel: this.setCurLabel, 
       setRandomLabel: this.setRandomLabel
     }

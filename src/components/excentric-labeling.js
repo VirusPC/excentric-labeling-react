@@ -16,11 +16,12 @@ import * as d3 from "d3";
  * @param {object} interactionParams 
  * @param {string | number} interactionParams.lensRadius 
  * @param {string | number} interactionParams.fontSize
+ * @param {string | number} interactionParams.maxLabelsNum
  * @param {Function} interactionParams.setCurLabel
  * @param {Function} interactionParams.setRandomLabel
  */
 export default function addExcenricLabelingInteraction(root, width, height, coordinates, interactionParams) {
-  const { lensRadius, fontSize, setCurLabel, setRandomLabel } = interactionParams;
+  const { lensRadius, fontSize, maxLabelsNum, setCurLabel, setRandomLabel } = interactionParams;
   const strokeColor = "green",
     strokeWidth = "1px",
     countLabelWidth = 30,
@@ -85,7 +86,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     const mouseCoordinate = { x: mousePosition[0], y: mousePosition[1] };
 
     const { filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(coordinates, mouseCoordinate, lensRadius);
-    const lineCoords = computeInitialPosition(filteredCoords.slice(0, 10), mouseCoordinate, lensRadius);
+    const lineCoords = computeInitialPosition(filteredCoords.slice(0, +maxLabelsNum), mouseCoordinate, lensRadius);
     const orderedLineCoords = computeOrdering(lineCoords);
     const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
     stackAccordingToOrder(groupedLineCoords, mouseCoordinate, countLabelBoundingClientRect.height);
