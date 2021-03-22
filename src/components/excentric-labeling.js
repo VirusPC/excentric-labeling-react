@@ -1,6 +1,6 @@
 import { convertLegacyProps } from "antd/lib/button/button";
 import * as d3 from "d3";
-import { filter, first, forEach } from "lodash";
+import _, { filter, first, forEach, last } from "lodash";
 
 export const OPTIONS = [
   "Vertically Coherent Labeling",
@@ -87,7 +87,6 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
 
   function onMouseenter(e) {
     groupTooltip.style("visibility", "visible")
-    groupLabels.style("visibility", "visible")
   }
 
   function onMousemove(e) {
@@ -97,24 +96,32 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     const paths = coordinates
       .map((coord) => transformDataFormat(coord, mouseCoordinate))
     let { filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(paths, lensRadius);
+    countLabel.text(filteredCoords.length);
     filteredCoords = filteredCoords.slice(0, +maxLabelsNum);
-    filteredCoords.forEach((coord) => computeRad(coord));
 
-    if (!checkedOptions.find(option => option === OPTIONS[0])) {
+    let orderedLineCoords
+    if (checkedOptions.find(option => option === OPTIONS[0])) {
+      orderedLineCoords = computeOrderingAccordingToY(filteredCoords);
+    } else {
+      filteredCoords.forEach((coord) => computeRad(coord));
       computeInitialPosition(filteredCoords, lensRadius);
+      orderedLineCoords = computeOrderingAccordingToRad(filteredCoords);
     }
-    const orderedLineCoords = computeOrdering(filteredCoords);
     const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
     stackAccordingToOrder(groupedLineCoords, countLabelBoundingClientRect.height);
 
-    countLabel.text(filteredCoords.length);
+    if (checkedOptions.find(option => option === OPTIONS[1])) {
+      moveHorizontallyAccordingToXCoord(groupedLineCoords)
+    }
+
+
     groupTooltip.attr("transform", `translate(${mouseCoordinate.x}, ${mouseCoordinate.y})`)
     groupLabels.selectAll("*").remove();
-
     renderLabels(groupLabels, groupedLineCoords, fontSize);
     computeTranslatedControlPoint(groupLabels);
     translateLabels(groupLabels);
     renderLines(groupLabels, groupedLineCoords);
+
 
     setCurLabel(nearestLabel)
     setRandomLabel(randomLabel)
@@ -122,7 +129,6 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
 
   function onMouseleave(e) {
     groupTooltip.style("visibility", "hidden")
-    groupLabels.style("visibility", "hidden")
   }
 
 }
@@ -185,9 +191,10 @@ function computeRad(coordinate) {
   coordinate.rad = rad;
 }
 
-/*
- * step 2
- * project dot to the most recently position on lens circle.
+/**
+ * project dots to the nearest position on lens.
+ * @param {*} coordinates 
+ * @param {*} radius 
  */
 function computeInitialPosition(coordinates, radius) {
   for (let i = 0; i < coordinates.length; i++) {
@@ -199,10 +206,12 @@ function computeInitialPosition(coordinates, radius) {
   }
 }
 
-/*
- * step 3
+/**
+ * sort lines according to the position projected to lens
+ * @param {*} lineCoordinates 
+ * @returns 
  */
-function computeOrdering(lineCoordinates) {
+function computeOrderingAccordingToRad(lineCoordinates) {
   const fullRad = 2 * Math.PI;
   const quarterRad = 0.5 * Math.PI;
 
@@ -211,13 +220,12 @@ function computeOrdering(lineCoordinates) {
   const rotateAQuarter = rad => rad - quarterRad;
 
   lineCoordinates.forEach((line) => {
-    const [rad] = [line.rad]
+    [line.rad]
       .map(negativeToPositive)
       .map(reverse)
       .map(negativeToPositive)
       .map(rotateAQuarter)
       .map(negativeToPositive);
-    line.radAjusted = rad;
   });
   const comparator = (line1, line2) => {
     return line1.radAjusted - line2.radAjusted;
@@ -226,26 +234,40 @@ function computeOrdering(lineCoordinates) {
   return lineCoordinates.sort(comparator);
 }
 
-/*
- * step 4
+/**
+ * sort lines according to the original point y position
+ * @param {*} lineCoordinates 
+ * @returns 
+ */
+function computeOrderingAccordingToY(lineCoordinates) {
+  const comparator = (line1, line2) => {
+    return line1.controlPoints[0].y - line2.controlPoints[0].y
+  }
+  return lineCoordinates.sort(comparator);
+}
+
+/**
+ * Divided line coords to left and right
+ * @param {*} lineCoordinates 
+ * @returns 
  */
 function assignLabelToLeftOrRight(lineCoordinates) {
-  // [leftCoords, rightCoords]
   const groupedLineCoords = [[], []];
-  const halfRad = Math.PI;
   for (const lineCoord of lineCoordinates) {
-    lineCoord.radAjusted < halfRad
+    lineCoord.controlPoints[0].x < 0
       ? groupedLineCoords[0].push(lineCoord)
       : groupedLineCoords[1].push(lineCoord);
   }
   return groupedLineCoords;
 }
 
-/*
- * step 5
+/**
+ * Determine the final y coordinate of lables
+ * @param {*} groupedLineCoords 
+ * @param {*} labelHeight 
  */
 function stackAccordingToOrder(groupedLineCoords, labelHeight) {
-  const horizontalMargin = 50;
+  const horizontalMargin = 60;
   const verticalMargin = 1;
   labelHeight = labelHeight + (verticalMargin >> 1);
   const halfLabelHeight = labelHeight >> 1;
@@ -272,6 +294,49 @@ function stackAccordingToOrder(groupedLineCoords, labelHeight) {
       x: rightX,
       y: rightStartY - i * labelHeight - halfLabelHeight,
     });
+  }
+}
+
+/**
+ * Labels are aligned left, move them horizontally according to the x coordination of dots.
+ * @param {*} groupedLineCoords 
+ */
+function moveHorizontallyAccordingToXCoord(groupedLineCoords) {
+  const spaceToMove = 20;
+  const comparator = (line1, line2) => line1.controlPoints[0].x - line2.controlPoints[0].x;
+  const sortedGroupedLineCoords = groupedLineCoords.map(lineCoords => lineCoords.sort(comparator));
+  const [stepNumLeft, stepNumRight] = sortedGroupedLineCoords.map(
+    lineCoords => _.uniq(lineCoords.map(lineCoord => lineCoord.controlPoints[0].x)).length
+  );
+  const stepLeft = spaceToMove / stepNumLeft;
+  const stepRight = spaceToMove / stepNumRight;
+  console.log("s", sortedGroupedLineCoords);
+
+  let i = -1;
+  let xBefore;
+  for (const lineCoord of sortedGroupedLineCoords[0]) {
+    const controlPoints = lineCoord.controlPoints;
+    const firstPoint = controlPoints[0];
+    const lastPoint = controlPoints[controlPoints.length - 1];
+    if (firstPoint.x !== xBefore) {
+      xBefore = firstPoint.x;
+      i++;
+    }
+    lastPoint.x += stepLeft * i;
+  }
+
+  i = stepNumRight;
+  xBefore = undefined;
+  for (const lineCoord of sortedGroupedLineCoords[1]) {
+    const controlPoints = lineCoord.controlPoints;
+    const firstPoint = controlPoints[0];
+    const lastPoint = controlPoints[controlPoints.length - 1];
+    if (firstPoint.x !== xBefore) {
+      xBefore = firstPoint.x;
+      i--;
+    }
+    //const newPoint = {x: lastPoint.x + stepRight* i, y: lastPoint.y};
+    lastPoint.x -= i * stepRight;
   }
 }
 
@@ -327,6 +392,10 @@ function renderLabels(root, groupedLineCoords, fontSize) {
     })
 }
 
+/**
+ * Align labels left (if `moveHorizontallyAccordingToXCoord()` not be called)
+ * @param {*} root 
+ */
 function computeTranslatedControlPoint(root) {
   const groupLeft = root.select(".left");
   const groupItems = groupLeft.selectAll(":scope>g");
@@ -358,10 +427,6 @@ function translateLabels(root) {
       })
     );
 
-}
-
-function computeTranslatedControlPoint2(group) {
- 
 }
 
 function renderLines(root, groupedLineCoords) {
