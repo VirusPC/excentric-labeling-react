@@ -95,11 +95,11 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     const mouseCoordinate = { x: mousePosition[0], y: mousePosition[1] };
 
     const paths = coordinates
-      .map((coord) =>transformDataFormat(coord, mouseCoordinate))
-    let{ filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(paths, lensRadius);
+      .map((coord) => transformDataFormat(coord, mouseCoordinate))
+    let { filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(paths, lensRadius);
     filteredCoords = filteredCoords.slice(0, +maxLabelsNum);
     filteredCoords.forEach((coord) => computeRad(coord));
-    if(!checkedOptions.find(option => option === OPTIONS[0])){
+    if (!checkedOptions.find(option => option === OPTIONS[0])) {
       computeInitialPosition(filteredCoords, lensRadius);
     }
     const orderedLineCoords = computeOrdering(filteredCoords);
@@ -109,8 +109,10 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     countLabel.text(filteredCoords.length);
     groupTooltip.attr("transform", `translate(${mouseCoordinate.x}, ${mouseCoordinate.y})`)
     groupLabels.selectAll("*").remove();
+    
     renderLabels(groupLabels, groupedLineCoords, fontSize);
     translateLables(groupLabels);
+    renderLines(groupLabels, groupedLineCoords);
 
     setCurLabel(nearestLabel)
     setRandomLabel(randomLabel)
@@ -131,12 +133,11 @@ function extractLabelAndPosition(coordinates, radius) {
 
   let nearestLabel = "";
   let minDist = Number.MAX_VALUE;
-  const centerPoint = {x: 0, y: 0};
+  const centerPoint = { x: 0, y: 0 };
 
   const filteredCoords = coordinates
     .filter((coordinateDot) => {
       const dist = distance(centerPoint, coordinateDot.controlPoints[0])
-      console.log(dist);
       if (dist > radius) {
         return false;
       }
@@ -163,7 +164,7 @@ function extractLabelAndPosition(coordinates, radius) {
  * @param {*} mouseCoordinate 
  * @returns 
  */
-function transformDataFormat(coordinate, mouseCoordinate){
+function transformDataFormat(coordinate, mouseCoordinate) {
   return {
     label: coordinate.label,
     color: coordinate.color,
@@ -177,9 +178,9 @@ function transformDataFormat(coordinate, mouseCoordinate){
 }
 
 function computeRad(coordinate) {
-    const firstControlPoint = coordinate.controlPoints[0];
-    const rad = Math.atan2(firstControlPoint.y, firstControlPoint.x);
-    coordinate.rad = rad;
+  const firstControlPoint = coordinate.controlPoints[0];
+  const rad = Math.atan2(firstControlPoint.y, firstControlPoint.x);
+  coordinate.rad = rad;
 }
 
 /*
@@ -189,10 +190,10 @@ function computeRad(coordinate) {
 function computeInitialPosition(coordinates, radius) {
   for (let i = 0; i < coordinates.length; i++) {
     const coordinate = coordinates[i];
-    coordinate.controlPoints.push(        {
-          x: radius * Math.cos(coordinate.rad),
-          y: radius * Math.sin(coordinate.rad),
-        });
+    coordinate.controlPoints.push({
+      x: radius * Math.cos(coordinate.rad),
+      y: radius * Math.sin(coordinate.rad),
+    });
   }
 }
 
@@ -227,15 +228,13 @@ function computeOrdering(lineCoordinates) {
  * step 4
  */
 function assignLabelToLeftOrRight(lineCoordinates) {
-  const groupedLineCoords = {
-    left: [],
-    right: [],
-  }
+  // [leftCoords, rightCoords]
+  const groupedLineCoords = [[], []];
   const halfRad = Math.PI;
   for (const lineCoord of lineCoordinates) {
     lineCoord.radAjusted < halfRad
-      ? groupedLineCoords.left.push(lineCoord)
-      : groupedLineCoords.right.push(lineCoord);
+      ? groupedLineCoords[0].push(lineCoord)
+      : groupedLineCoords[1].push(lineCoord);
   }
   return groupedLineCoords;
 }
@@ -249,7 +248,7 @@ function stackAccordingToOrder(groupedLineCoords, labelHeight) {
   labelHeight = labelHeight + (verticalMargin >> 1);
   const halfLabelHeight = labelHeight >> 1;
 
-  const leftCoords = groupedLineCoords.left;
+  const leftCoords = groupedLineCoords[0];
   const leftStackHeight = leftCoords.length * labelHeight;
   const leftX = - horizontalMargin;
   const leftStartY = - (leftStackHeight >> 1);
@@ -261,7 +260,7 @@ function stackAccordingToOrder(groupedLineCoords, labelHeight) {
     });
   }
 
-  const rightCoords = groupedLineCoords.right;
+  const rightCoords = groupedLineCoords[1];
   const rightStackHeight = rightCoords.length * labelHeight;
   const rightX = horizontalMargin;
   const rightStartY = (rightStackHeight >> 1);
@@ -274,42 +273,23 @@ function stackAccordingToOrder(groupedLineCoords, labelHeight) {
   }
 }
 
-//function minimizeVerticalDistance() { }
-
-//function addLines() { }
-
-// with bug
-
-// function renderLines() {
-//   groupLeft
-// }
 
 function renderLabels(root, groupedLineCoords, fontSize) {
   const strokeWidth = "1px";
-
-  const lineGenerator = d3.line().x(d => d.x).y(d => d.y);
 
   const groupLeft = root.append('g').attr("class", "left")
   const groupRight = root.append('g').attr("class", "right")
 
   groupLeft.selectAll("g")
-    .data(groupedLineCoords.left)
+    .data(groupedLineCoords[0])
     .join("g")
     .attr("class", d => d.label)
     .each(function (d, i) {
       const g = d3.select(this);
-
-
       const endPoint = {
         x: d.controlPoints[d.controlPoints.length - 1].x,
         y: d.controlPoints[d.controlPoints.length - 1].y,
       }
-      g.append("path")
-        .attr("d", lineGenerator(d.controlPoints))
-        .attr("stroke", d.color)
-        .attr("stroke-width", strokeWidth)
-        .attr("fill", "none")
-
       let clientRect;
       g.append("text")
         .text(d.label)
@@ -321,7 +301,6 @@ function renderLabels(root, groupedLineCoords, fontSize) {
           clientRect = this.getBoundingClientRect()
           return endPoint.y + (clientRect.height >> 1);
         })
-
       g.append("rect")
         .attr('x', endPoint.x - clientRect.width)
         .attr('y', endPoint.y - (clientRect.height >> 1) + 3)
@@ -333,7 +312,7 @@ function renderLabels(root, groupedLineCoords, fontSize) {
     })
 
   groupRight.selectAll("g")
-    .data(groupedLineCoords.right)
+    .data(groupedLineCoords[1])
     .join("g")
     .attr("class", d => d.label)
     .each(function (d, i) {
@@ -343,12 +322,6 @@ function renderLabels(root, groupedLineCoords, fontSize) {
         x: d.controlPoints[d.controlPoints.length - 1].x,
         y: d.controlPoints[d.controlPoints.length - 1].y,
       }
-      g.append("path")
-        .attr("d", lineGenerator(d.controlPoints))
-        .attr("stroke", d.color)
-        .attr("stroke-width", strokeWidth)
-        .attr("fill", "none")
-
       let clientRect;
       g.append("text")
         .text(d.label)
@@ -360,7 +333,6 @@ function renderLabels(root, groupedLineCoords, fontSize) {
           clientRect = this.getBoundingClientRect()
           return endPoint.y + (clientRect.height >> 1);
         })
-
       g.append("rect")
         .attr('x', endPoint.x)
         .attr('y', endPoint.y - (clientRect.height >> 1) + 3)
@@ -376,7 +348,6 @@ function translateLables(root) {
   const groupLeft = root.select(".left");
   const groupItems = groupLeft.selectAll(":scope>g");
   const texts = groupItems.selectAll(":scope>text")
-  //const rects = groupItems.selectAll(":scope>rect")
   let maxLabelWidth = 0;
   const widths = [];
   texts.each(function () {
@@ -384,20 +355,38 @@ function translateLables(root) {
     widths.push(curWidth);
     if (curWidth > maxLabelWidth) maxLabelWidth = curWidth;
   });
-  groupItems.each(function(){
+  groupItems.each(function (d, i) {
     const g = d3.select(this);
-    const text  = g.select("text")
+    const text = g.select("text")
     const { width, height } = text.node().getBoundingClientRect();
-    const offset = width-maxLabelWidth
+    const offset = width - maxLabelWidth
     text.attr("transform", `translate(${offset}, 0)`)
     const rect = g.select("rect");
-
     rect.attr("transform", `translate(${offset}, 0)`)
-    const line = g.append("line")
-      .attr("x1", text.attr("x"))
-      .attr("y1", +text.attr("y") - height/2)
-      .attr("x2", +text.attr("x") + offset)
-      .attr("y2", +text.attr("y") - height/2)
-      .attr("stroke", text.attr("fill"))
+    const lastControlPoint = d.controlPoints[d.controlPoints.length - 1];
+    d.controlPoints.push({ x: lastControlPoint.x + offset, y: lastControlPoint.y });
   });
+}
+
+function renderLines(root, groupedLineCoords) {
+  const strokeWidth = "1px";
+
+  const lineGenerator = d3.line().x(d => d.x).y(d => d.y);
+  const groupLeft = root.select(".left");
+  const groupRight = root.select(".right");
+
+  [groupLeft, groupRight].map(
+    (g, i) => g.selectAll("g")
+      .data(groupedLineCoords[i])
+      .join("g")
+      .attr("class", d => d.label)
+      .each(function (d, i) {
+        const g = d3.select(this);
+        g.append("path")
+          .attr("d", lineGenerator(d.controlPoints))
+          .attr("stroke", d.color)
+          .attr("stroke-width", strokeWidth)
+          .attr("fill", "none")
+      }))
+
 }
