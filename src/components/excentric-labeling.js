@@ -1,3 +1,4 @@
+import { convertLegacyProps } from "antd/lib/button/button";
 import * as d3 from "d3";
 import { filter, first } from "lodash";
 
@@ -37,7 +38,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
   const groupTooltip = root.append("g")
     .attr("class", "groupTooltip ")
     .attr("visibility", "hidden");
-  const groupLabels = root.append("g")
+  const groupLabels = groupTooltip.append("g")
     .attr("class", "groupLabels")
   const groupOverlay = root.append("g")
     .attr("class", "groupOverlay ")
@@ -93,17 +94,17 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     const mousePosition = d3.pointer(e, groupOverlay.node());
     const mouseCoordinate = { x: mousePosition[0], y: mousePosition[1] };
 
-    let{ filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(coordinates, mouseCoordinate, lensRadius);
+    const paths = coordinates
+      .map((coord) =>transformDataFormat(coord, mouseCoordinate))
+    let{ filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(paths, lensRadius);
     filteredCoords = filteredCoords.slice(0, +maxLabelsNum);
-    const transformedCoords = filteredCoords
-      .map(transformDataFormat)
-    transformedCoords.forEach((coord) => computeRad(coord, mouseCoordinate));
+    filteredCoords.forEach((coord) => computeRad(coord));
     if(!checkedOptions.find(option => option === OPTIONS[0])){
-      computeInitialPosition(transformedCoords, mouseCoordinate, lensRadius);
+      computeInitialPosition(filteredCoords, lensRadius);
     }
-    const orderedLineCoords = computeOrdering(transformedCoords);
+    const orderedLineCoords = computeOrdering(filteredCoords);
     const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
-    stackAccordingToOrder(groupedLineCoords, mouseCoordinate, countLabelBoundingClientRect.height);
+    stackAccordingToOrder(groupedLineCoords, countLabelBoundingClientRect.height);
 
     countLabel.text(filteredCoords.length);
     groupTooltip.attr("transform", `translate(${mouseCoordinate.x}, ${mouseCoordinate.y})`)
@@ -125,15 +126,17 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
 /*
  * step 1
  */
-function extractLabelAndPosition(coordinates, coordinateMouse, radius) {
+function extractLabelAndPosition(coordinates, radius) {
   const distance = (coordinate1, coordinate2) => Math.sqrt((coordinate1.x - coordinate2.x) ** 2 + (coordinate1.y - coordinate2.y) ** 2);
 
   let nearestLabel = "";
   let minDist = Number.MAX_VALUE;
+  const centerPoint = {x: 0, y: 0};
 
   const filteredCoords = coordinates
     .filter((coordinateDot) => {
-      const dist = distance(coordinateMouse, coordinateDot)
+      const dist = distance(centerPoint, coordinateDot.controlPoints[0])
+      console.log(dist);
       if (dist > radius) {
         return false;
       }
@@ -149,26 +152,33 @@ function extractLabelAndPosition(coordinates, coordinateMouse, radius) {
     randomLabel = filteredCoords[Math.floor(Math.random() * (filteredCoords.length - 1))].label
   };
 
+  console.log(filteredCoords)
   return { filteredCoords: filteredCoords, nearestLabel: nearestLabel, randomLabel: randomLabel };
-
 }
 
-function transformDataFormat(coordinate){
+/**
+ * Add control points to store the points on the path
+ * Move the center point of the coordinate system to mouse position.
+ * @param {*} coordinate 
+ * @param {*} mouseCoordinate 
+ * @returns 
+ */
+function transformDataFormat(coordinate, mouseCoordinate){
   return {
     label: coordinate.label,
     color: coordinate.color,
     controlPoints: [
       {
-        x: coordinate.x,
-        y: coordinate.y,
+        x: coordinate.x - mouseCoordinate.x,
+        y: coordinate.y - mouseCoordinate.y,
       }
     ]
   }
 }
 
-function computeRad(coordinate, mouseCoordinate) {
+function computeRad(coordinate) {
     const firstControlPoint = coordinate.controlPoints[0];
-    const rad = Math.atan2(firstControlPoint.y - mouseCoordinate.y, firstControlPoint.x - mouseCoordinate.x);
+    const rad = Math.atan2(firstControlPoint.y, firstControlPoint.x);
     coordinate.rad = rad;
 }
 
@@ -176,12 +186,12 @@ function computeRad(coordinate, mouseCoordinate) {
  * step 2
  * project dot to the most recently position on lens circle.
  */
-function computeInitialPosition(coordinates, mouseCoordinate, radius) {
+function computeInitialPosition(coordinates, radius) {
   for (let i = 0; i < coordinates.length; i++) {
     const coordinate = coordinates[i];
     coordinate.controlPoints.push(        {
-          x: radius * Math.cos(coordinate.rad) + mouseCoordinate.x,
-          y: radius * Math.sin(coordinate.rad) + mouseCoordinate.y
+          x: radius * Math.cos(coordinate.rad),
+          y: radius * Math.sin(coordinate.rad),
         });
   }
 }
@@ -209,6 +219,7 @@ function computeOrdering(lineCoordinates) {
   const comparator = (line1, line2) => {
     return line1.radAjusted - line2.radAjusted;
   }
+
   return lineCoordinates.sort(comparator);
 }
 
@@ -232,7 +243,7 @@ function assignLabelToLeftOrRight(lineCoordinates) {
 /*
  * step 5
  */
-function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) {
+function stackAccordingToOrder(groupedLineCoords, labelHeight) {
   const horizontalMargin = 50;
   const verticalMargin = 1;
   labelHeight = labelHeight + (verticalMargin >> 1);
@@ -240,8 +251,8 @@ function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) 
 
   const leftCoords = groupedLineCoords.left;
   const leftStackHeight = leftCoords.length * labelHeight;
-  const leftX = mouseCoordinate.x - horizontalMargin;
-  const leftStartY = mouseCoordinate.y - (leftStackHeight >> 1);
+  const leftX = - horizontalMargin;
+  const leftStartY = - (leftStackHeight >> 1);
   for (let i = 0; i < leftCoords.length; i++) {
     const coord = leftCoords[i];
     coord.controlPoints.push({
@@ -252,8 +263,8 @@ function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) 
 
   const rightCoords = groupedLineCoords.right;
   const rightStackHeight = rightCoords.length * labelHeight;
-  const rightX = mouseCoordinate.x + horizontalMargin;
-  const rightStartY = mouseCoordinate.y + (rightStackHeight >> 1);
+  const rightX = horizontalMargin;
+  const rightStartY = (rightStackHeight >> 1);
   for (let i = 0; i < rightCoords.length; i++) {
     const coord = rightCoords[i];
     coord.controlPoints.push({
@@ -268,6 +279,11 @@ function stackAccordingToOrder(groupedLineCoords, mouseCoordinate, labelHeight) 
 //function addLines() { }
 
 // with bug
+
+// function renderLines() {
+//   groupLeft
+// }
+
 function renderLabels(root, groupedLineCoords, fontSize) {
   const strokeWidth = "1px";
 
