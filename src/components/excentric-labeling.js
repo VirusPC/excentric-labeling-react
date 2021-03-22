@@ -1,6 +1,6 @@
 import { convertLegacyProps } from "antd/lib/button/button";
 import * as d3 from "d3";
-import { filter, first } from "lodash";
+import { filter, first, forEach } from "lodash";
 
 export const OPTIONS = [
   "Vertically Coherent Labeling",
@@ -99,6 +99,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     let { filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(paths, lensRadius);
     filteredCoords = filteredCoords.slice(0, +maxLabelsNum);
     filteredCoords.forEach((coord) => computeRad(coord));
+
     if (!checkedOptions.find(option => option === OPTIONS[0])) {
       computeInitialPosition(filteredCoords, lensRadius);
     }
@@ -109,9 +110,10 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     countLabel.text(filteredCoords.length);
     groupTooltip.attr("transform", `translate(${mouseCoordinate.x}, ${mouseCoordinate.y})`)
     groupLabels.selectAll("*").remove();
-    
+
     renderLabels(groupLabels, groupedLineCoords, fontSize);
-    translateLables(groupLabels);
+    computeTranslatedControlPoint(groupLabels);
+    translateLabels(groupLabels);
     renderLines(groupLabels, groupedLineCoords);
 
     setCurLabel(nearestLabel)
@@ -286,24 +288,15 @@ function renderLabels(root, groupedLineCoords, fontSize) {
     .attr("class", d => d.label)
     .each(function (d, i) {
       const g = d3.select(this);
-      const endPoint = {
-        x: d.controlPoints[d.controlPoints.length - 1].x,
-        y: d.controlPoints[d.controlPoints.length - 1].y,
-      }
-      let clientRect;
-      g.append("text")
+      const text = g.append("text")
         .text(d.label)
         .attr("fill", d.color)
         .attr("font-size", fontSize)
         .attr("text-anchor", "end")
-        .attr("x", endPoint.x)
-        .attr("y", function () {
-          clientRect = this.getBoundingClientRect()
-          return endPoint.y + (clientRect.height >> 1);
-        })
+      const clientRect = text.node().getBoundingClientRect();
       g.append("rect")
-        .attr('x', endPoint.x - clientRect.width)
-        .attr('y', endPoint.y - (clientRect.height >> 1) + 3)
+        .attr('x', - clientRect.width)
+        .attr('y', - ((clientRect.height >> 1) + 3))
         .attr("width", clientRect.width)
         .attr("height", clientRect.height)
         .attr("stroke", d.color)
@@ -318,24 +311,14 @@ function renderLabels(root, groupedLineCoords, fontSize) {
     .each(function (d, i) {
       const g = d3.select(this);
 
-      const endPoint = {
-        x: d.controlPoints[d.controlPoints.length - 1].x,
-        y: d.controlPoints[d.controlPoints.length - 1].y,
-      }
-      let clientRect;
-      g.append("text")
+      const text = g.append("text")
         .text(d.label)
         .attr("fill", d.color)
         .attr("font-size", fontSize)
         .attr("text-anchor", "start")
-        .attr("x", endPoint.x)
-        .attr("y", function () {
-          clientRect = this.getBoundingClientRect()
-          return endPoint.y + (clientRect.height >> 1);
-        })
+      const clientRect = text.node().getBoundingClientRect();
       g.append("rect")
-        .attr('x', endPoint.x)
-        .attr('y', endPoint.y - (clientRect.height >> 1) + 3)
+        .attr("y", -((clientRect.height >> 1) + 3))
         .attr("width", clientRect.width)
         .attr("height", clientRect.height)
         .attr("stroke", d.color)
@@ -344,7 +327,7 @@ function renderLabels(root, groupedLineCoords, fontSize) {
     })
 }
 
-function translateLables(root) {
+function computeTranslatedControlPoint(root) {
   const groupLeft = root.select(".left");
   const groupItems = groupLeft.selectAll(":scope>g");
   const texts = groupItems.selectAll(":scope>text")
@@ -360,12 +343,25 @@ function translateLables(root) {
     const text = g.select("text")
     const { width, height } = text.node().getBoundingClientRect();
     const offset = width - maxLabelWidth
-    text.attr("transform", `translate(${offset}, 0)`)
-    const rect = g.select("rect");
-    rect.attr("transform", `translate(${offset}, 0)`)
     const lastControlPoint = d.controlPoints[d.controlPoints.length - 1];
-    d.controlPoints.push({ x: lastControlPoint.x + offset, y: lastControlPoint.y });
+    const newControlPoint = { x: lastControlPoint.x + offset, y: lastControlPoint.y };
+    d.controlPoints.push(newControlPoint);
   });
+}
+
+function translateLabels(root) {
+  [root.selectAll(".left g"), root.selectAll(".right g")]
+    .forEach(
+      g => g.each(function (d) {
+        const lastControlPoint = d.controlPoints[d.controlPoints.length - 1];
+        d3.select(this).attr("transform", `translate(${lastControlPoint.x}, ${lastControlPoint.y})`)
+      })
+    );
+
+}
+
+function computeTranslatedControlPoint2(group) {
+ 
 }
 
 function renderLines(root, groupedLineCoords) {
@@ -376,7 +372,7 @@ function renderLines(root, groupedLineCoords) {
   const groupRight = root.select(".right");
 
   [groupLeft, groupRight].map(
-    (g, i) => g.selectAll("g")
+    (g, i) => g.selectAll("path")
       .data(groupedLineCoords[i])
       .join("g")
       .attr("class", d => d.label)
