@@ -1,4 +1,10 @@
 import * as d3 from "d3";
+import { filter, first } from "lodash";
+
+export const OPTIONS = [
+  "Vertically Coherent Labeling",
+  "Horizontally Coherent Labeling"
+];
 
 /**
  * Add excentric labeling interaction to the root element. 
@@ -17,11 +23,12 @@ import * as d3 from "d3";
  * @param {string | number} interactionParams.lensRadius 
  * @param {string | number} interactionParams.fontSize
  * @param {string | number} interactionParams.maxLabelsNum
+ * @param {string[]} interactionParams.checkedOptions
  * @param {Function} interactionParams.setCurLabel
  * @param {Function} interactionParams.setRandomLabel
  */
 export default function addExcenricLabelingInteraction(root, width, height, coordinates, interactionParams) {
-  const { lensRadius, fontSize, maxLabelsNum, setCurLabel, setRandomLabel } = interactionParams;
+  const { lensRadius, fontSize, maxLabelsNum, setCurLabel, setRandomLabel, checkedOptions } = interactionParams;
   const strokeColor = "green",
     strokeWidth = "1px",
     countLabelWidth = 30,
@@ -79,15 +86,22 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
 
   function onMouseenter(e) {
     groupTooltip.style("visibility", "visible")
+    groupLabels.style("visibility", "visible")
   }
 
   function onMousemove(e) {
     const mousePosition = d3.pointer(e, groupOverlay.node());
     const mouseCoordinate = { x: mousePosition[0], y: mousePosition[1] };
 
-    const { filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(coordinates, mouseCoordinate, lensRadius);
-    const lineCoords = computeInitialPosition(filteredCoords.slice(0, +maxLabelsNum), mouseCoordinate, lensRadius);
-    const orderedLineCoords = computeOrdering(lineCoords);
+    let{ filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(coordinates, mouseCoordinate, lensRadius);
+    filteredCoords = filteredCoords.slice(0, +maxLabelsNum);
+    const transformedCoords = filteredCoords
+      .map(transformDataFormat)
+    transformedCoords.forEach((coord) => computeRad(coord, mouseCoordinate));
+    if(!checkedOptions.find(option => option === OPTIONS[0])){
+      computeInitialPosition(transformedCoords, mouseCoordinate, lensRadius);
+    }
+    const orderedLineCoords = computeOrdering(transformedCoords);
     const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
     stackAccordingToOrder(groupedLineCoords, mouseCoordinate, countLabelBoundingClientRect.height);
 
@@ -103,6 +117,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
 
   function onMouseleave(e) {
     groupTooltip.style("visibility", "hidden")
+    groupLabels.style("visibility", "hidden")
   }
 
 }
@@ -138,33 +153,37 @@ function extractLabelAndPosition(coordinates, coordinateMouse, radius) {
 
 }
 
+function transformDataFormat(coordinate){
+  return {
+    label: coordinate.label,
+    color: coordinate.color,
+    controlPoints: [
+      {
+        x: coordinate.x,
+        y: coordinate.y,
+      }
+    ]
+  }
+}
+
+function computeRad(coordinate, mouseCoordinate) {
+    const firstControlPoint = coordinate.controlPoints[0];
+    const rad = Math.atan2(firstControlPoint.y - mouseCoordinate.y, firstControlPoint.x - mouseCoordinate.x);
+    coordinate.rad = rad;
+}
 
 /*
  * step 2
  * project dot to the most recently position on lens circle.
  */
 function computeInitialPosition(coordinates, mouseCoordinate, radius) {
-  const lineCoordinates = [];
   for (let i = 0; i < coordinates.length; i++) {
     const coordinate = coordinates[i];
-    const rad = Math.atan2(coordinate.y - mouseCoordinate.y, coordinate.x - mouseCoordinate.x);
-    lineCoordinates.push({
-      label: coordinate.label,
-      color: coordinate.color,
-      rad: rad,
-      controlPoints: [
-        {
-          x: coordinate.x,
-          y: coordinate.y
-        }, // origin position
-        {
-          x: radius * Math.cos(rad) + mouseCoordinate.x,
-          y: radius * Math.sin(rad) + mouseCoordinate.y
-        }, // position prejected on circumference
-      ],
-    });
+    coordinate.controlPoints.push(        {
+          x: radius * Math.cos(coordinate.rad) + mouseCoordinate.x,
+          y: radius * Math.sin(coordinate.rad) + mouseCoordinate.y
+        });
   }
-  return lineCoordinates;
 }
 
 /*
@@ -358,7 +377,6 @@ function translateLables(root) {
     const rect = g.select("rect");
 
     rect.attr("transform", `translate(${offset}, 0)`)
-    console.log(+text.attr("y") + height/2)
     const line = g.append("line")
       .attr("x1", text.attr("x"))
       .attr("y1", +text.attr("y") - height/2)

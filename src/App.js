@@ -1,10 +1,10 @@
+import { useState } from 'react'
+import { Slider, Typography, Input, Row, Col, Checkbox } from 'antd'
 import Canvas from "./components/Canvas"
-import { Slider, Typography, Input, Row, Col } from 'antd'
-// import { Content, Footer, Header } from "antd/lib/layout/layout";
+import _ from 'lodash'
+import {OPTIONS} from "./components/excentric-labeling"
 import 'antd/dist/antd.css'
 import "./App.css"
-import { useState } from 'react'
-import _ from 'lodash'
 
 const { Title, Text } = Typography;
 
@@ -40,6 +40,8 @@ const sliderParams = {
   }
 };
 
+const options = []
+
 for (const paramName in sliderParams) {
   const param = sliderParams[paramName];
   _.range(param.min, param.max + 1, param.step)
@@ -53,6 +55,8 @@ function App() {
   const [maxLabelsNum, setMaxLabelsNum] = useState(sliderParams.labelsNum.default);
   const [curLabel, setCurLabel] = useState("");
   const [randomLabel, setRadomLabel] = useState("");
+
+  const [checkedOptions, setCheckedOptions] = useState([]);
 
   return (
     <div className="App" style={{ width: width, height: height, }}>
@@ -112,6 +116,16 @@ function App() {
             onChange={setMaxLabelsNum} />
         </Col>
       </Row>
+      <br></br>
+
+      <Row justify="center" align="middle">
+        <Col>
+          <Checkbox.Group 
+            options={OPTIONS}
+            defaultValue={[]} 
+            onChange={setCheckedOptions} />
+        </Col>
+      </Row>
 
       <Row justify="center">
         <Col span={24}>
@@ -122,6 +136,7 @@ function App() {
             maxLabelsNum={maxLabelsNum}
             setCurLabel={setCurLabel} 
             setRadomLabel={setRadomLabel}
+            checkedOptions={checkedOptions}
           ></Canvas>
         </Col>
       </Row>
@@ -129,7 +144,7 @@ function App() {
       <Row justify="center" align="middle">
         <Col span={2}>
           <Text strong>
-            Name:
+            Nearest:
             </Text>
         </Col>
         <Col span={6}>
@@ -137,9 +152,9 @@ function App() {
         </Col>
         <Col span={1}>
         </Col>
-        <Col span={3}>
+        <Col span={2}>
           <Text strong>
-            Random Items:
+            Random:
             </Text>
         </Col>
         <Col span={6}>

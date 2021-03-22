@@ -24,7 +24,8 @@ export default class Canvas extends Component {
   shouldComponentUpdate = (props, state) => {
     if(this.props.fontSize === props.fontSize 
         && this.props.lensRadius === props.lensRadius
-        && this.props.maxLabelsNum === props.maxLabelsNum){
+        && this.props.maxLabelsNum === props.maxLabelsNum
+        && JSON.stringify(this.props.checkedOptions) === JSON.stringify(props.checkedOptions)){
       return false;
     } 
     return true;
@@ -49,11 +50,12 @@ export default class Canvas extends Component {
   }
 
   extractInteractionParams(props) {
-    const {fontSize, lensRadius, maxLabelsNum} = props;
+    const {fontSize, lensRadius, maxLabelsNum, checkedOptions} = props;
     return {
       fontSize: fontSize, 
       lensRadius: lensRadius, 
       maxLabelsNum: maxLabelsNum,
+      checkedOptions: checkedOptions,
       setCurLabel: this.setCurLabel, 
       setRandomLabel: this.setRandomLabel
     }

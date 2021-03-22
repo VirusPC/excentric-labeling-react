@@ -11,6 +11,7 @@ import addExcenricLabelingInteraction  from "./excentric-labeling"
  * @param {string | number} interactionParams.lensRadius 
  * @param {string | number} interactionParams.fontSize
  * @param {string | number} interactionParams.maxLabelsNum
+ * @param {string[]} interactionParams.checkedOptions
  * @param {Function} interactionParams.setCurLabel
  * @param {Function} interactionParams.setRandomLabel
  */
