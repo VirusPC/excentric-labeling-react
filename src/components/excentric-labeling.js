@@ -8,11 +8,11 @@ import _ from "lodash";
  * @param {number} width 
  * @param {number} height 
  * 
- * @param {object} coordinates
- * @param {number} coordinates.x used for calculate position information.
- * @param {number} coordinates.y used for calculate position information.
- * @param {string} coordinates.label used for set the label text content.
- * @param {string} coordinates.color used for set the color of labels corresponding lines.
+ * @param {object} points
+ * @param {number} points.x used for calculate position information.
+ * @param {number} points.y used for calculate position information.
+ * @param {string} points.label used for set the label text content.
+ * @param {string} points.color used for set the color of labels corresponding lines.
  * 
  * @param {object} interactionParams some parameters can be adjusted.
  * @param {string | number} interactionParams.lensRadius the radius of lens.
@@ -21,11 +21,11 @@ import _ from "lodash";
  * @param {boolean} interactionParams.shouldVerticallyCoherent open the function: vertically coherent labeling.
  * @param {boolean} interactionParams.shouldHorizontallyCoherent open the function: horizontally coherent labeling.
  * 
- * @param {object} setStateFuncs some setState functions, which can set take effect outsides.
+ * @param {object} setStateFuncs some setState functions, which can produce some side effects.
  * @param {(currentlabel: string) => void} setStateFuncs.setCurLabel 
  * @param {(randowmLabel: string) => void} setStateFuncs.setRandomLabel
  */
-export default function addExcentricLabelingInteraction(root, width, height, coordinates, interactionParams, setStateFuncs) {
+export default function addExcentricLabelingInteraction(root, width, height, points, interactionParams, setStateFuncs) {
   const { lensRadius, fontSize, maxLabelsNum, shouldVerticallyCoherent, shouldHorizontallyCoherent } = interactionParams;
   const { setCurLabel, setRandomLabel} = setStateFuncs;
   const strokeColor = "green",
@@ -91,35 +91,36 @@ export default function addExcentricLabelingInteraction(root, width, height, coo
     const mousePosition = d3.pointer(e, groupOverlay.node());
     const mouseCoordinate = { x: mousePosition[0], y: mousePosition[1] };
 
-    const paths = coordinates
-      .map((coord) => transformDataFormat(coord, mouseCoordinate))
-    let { filteredCoords, nearestLabel, randomLabel } = extractLabelAndPosition(paths, lensRadius);
-    countLabel.text(filteredCoords.length);
-    filteredCoords = filteredCoords.slice(0, +maxLabelsNum);
+    const lines = points
+      .map((point) => transformDataFormat(point, mouseCoordinate))
+    let { filteredLines, nearestLabel, randomLabel } = extractLabelAndPosition(lines, lensRadius);
+    countLabel.text(filteredLines.length);
+    filteredLines = filteredLines.slice(0, +maxLabelsNum);
 
-    let orderedLineCoords
+    let orderedLines
     if (shouldVerticallyCoherent) {
-      orderedLineCoords = computeOrderingAccordingToY(filteredCoords);
+      orderedLines = computeOrderingAccordingToY(filteredLines);
     } else {
-      filteredCoords.forEach((coord) => computeRad(coord));
-      computeInitialPosition(filteredCoords, lensRadius);
-      orderedLineCoords = computeOrderingAccordingToRad(filteredCoords);
+      filteredLines.forEach((line) => computeRad(line));
+      computeInitialPosition(filteredLines, lensRadius);
+      orderedLines = computeOrderingAccordingToRad(filteredLines);
     }
-    const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
-    stackAccordingToOrder(groupedLineCoords, countLabelBoundingClientRect.height);
+    const groupedLines = assignLabelToLeftOrRight(orderedLines);
+    stackAccordingToOrder(groupedLines, countLabelBoundingClientRect.height);
 
     if (shouldHorizontallyCoherent) {
-      moveHorizontallyAccordingToXCoord(groupedLineCoords)
+      moveHorizontallyAccordingToXCoord(groupedLines)
     }
 
 
     groupTooltip.attr("transform", `translate(${mouseCoordinate.x}, ${mouseCoordinate.y})`)
     groupLabels.selectAll("*").remove();
-    renderLabels(groupLabels, groupedLineCoords, fontSize);
+    renderLabels(groupLabels, groupedLines, fontSize);
     computeTranslatedControlPoint(groupLabels);
     translateLabels(groupLabels);
-    renderLines(groupLabels, groupedLineCoords);
+    renderLines(groupLabels, groupedLines);
 
+    // side effects
     setCurLabel(nearestLabel)
     setRandomLabel(randomLabel)
   }
@@ -133,81 +134,81 @@ export default function addExcentricLabelingInteraction(root, width, height, coo
 /*
  * step 1
  */
-function extractLabelAndPosition(coordinates, radius) {
+function extractLabelAndPosition(lines, radius) {
   const distance = (coordinate1, coordinate2) => Math.sqrt((coordinate1.x - coordinate2.x) ** 2 + (coordinate1.y - coordinate2.y) ** 2);
 
   let nearestLabel = "";
   let minDist = Number.MAX_VALUE;
   const centerPoint = { x: 0, y: 0 };
 
-  const filteredCoords = coordinates
-    .filter((coordinateDot) => {
-      const dist = distance(centerPoint, coordinateDot.controlPoints[0])
+  const filteredLines =lines 
+    .filter((line) => {
+      const dist = distance(centerPoint, line.controlPoints[0])
       if (dist > radius) {
         return false;
       }
       if (dist < minDist) {
         minDist = dist;
-        nearestLabel = coordinateDot.label;
+        nearestLabel = line.label;
       }
       return true;
     });
 
   let randomLabel = "";
-  if (filteredCoords.length > 0) {
-    randomLabel = filteredCoords[Math.floor(Math.random() * (filteredCoords.length - 1))].label
+  if (filteredLines.length > 0) {
+    randomLabel = filteredLines[Math.floor(Math.random() * (filteredLines.length - 1))].label
   };
 
-  return { filteredCoords: filteredCoords, nearestLabel: nearestLabel, randomLabel: randomLabel };
+  return { filteredLines: filteredLines, nearestLabel: nearestLabel, randomLabel: randomLabel };
 }
 
 /**
  * Add control points to store the points on the path
  * Move the center point of the coordinate system to mouse position.
- * @param {*} coordinate 
+ * @param {*} point 
  * @param {*} mouseCoordinate 
  * @returns 
  */
-function transformDataFormat(coordinate, mouseCoordinate) {
+function transformDataFormat(point, mouseCoordinate) {
   return {
-    label: coordinate.label,
-    color: coordinate.color,
+    label: point.label,
+    color: point.color,
     controlPoints: [
       {
-        x: coordinate.x - mouseCoordinate.x,
-        y: coordinate.y - mouseCoordinate.y,
+        x: point.x - mouseCoordinate.x,
+        y: point.y - mouseCoordinate.y,
       }
     ]
   }
 }
 
-function computeRad(coordinate) {
-  const firstControlPoint = coordinate.controlPoints[0];
+function computeRad(line) {
+  const firstControlPoint = _.head(line.controlPoints);
   const rad = Math.atan2(firstControlPoint.y, firstControlPoint.x);
-  coordinate.rad = rad;
+  line.rad = rad;
 }
 
 /**
  * project dots to the nearest position on lens.
- * @param {*} coordinates 
+ * @param {*} points 
  * @param {*} radius 
  */
-function computeInitialPosition(coordinates, radius) {
-  for (let i = 0; i < coordinates.length; i++) {
-    const coordinate = coordinates[i];
-    coordinate.controlPoints.push({
-      x: radius * Math.cos(coordinate.rad),
-      y: radius * Math.sin(coordinate.rad),
+function computeInitialPosition(lines, radius) {
+  for (let i = 0; i < lines.length; i++) {
+    const line= lines[i];
+    line.controlPoints.push({
+      x: radius * Math.cos(line.rad),
+      y: radius * Math.sin(line.rad),
     });
   }
 }
 
 /**
  * sort lines according to the position projected to lens
- * @param {*} lineCoordinates 
+ * @param {*} lines 
  * @returns 
  */
-function computeOrderingAccordingToRad(lineCoordinates) {
+function computeOrderingAccordingToRad(lines) {
   const fullRad = 2 * Math.PI;
   const quarterRad = 0.5 * Math.PI;
 
@@ -215,7 +216,7 @@ function computeOrderingAccordingToRad(lineCoordinates) {
   const reverse = rad => -rad;
   const rotateAQuarter = rad => rad - quarterRad;
 
-  lineCoordinates.forEach((line) => {
+  lines.forEach((line) => {
     [line.rad]
       .map(negativeToPositive)
       .map(reverse)
@@ -227,66 +228,66 @@ function computeOrderingAccordingToRad(lineCoordinates) {
     return line1.radAjusted - line2.radAjusted;
   }
 
-  return lineCoordinates.sort(comparator);
+  return lines.sort(comparator);
 }
 
 /**
  * sort lines according to the original point y position
- * @param {*} lineCoordinates 
+ * @param {*} lines 
  * @returns 
  */
-function computeOrderingAccordingToY(lineCoordinates) {
+function computeOrderingAccordingToY(lines) {
   const comparator = (line1, line2) => {
     return line1.controlPoints[0].y - line2.controlPoints[0].y
   }
-  return lineCoordinates.sort(comparator);
+  return lines.sort(comparator);
 }
 
 /**
  * Divided line coords to left and right
- * @param {*} lineCoordinates 
+ * @param {*} lines 
  * @returns 
  */
-function assignLabelToLeftOrRight(lineCoordinates) {
-  const groupedLineCoords = [[], []];
-  for (const lineCoord of lineCoordinates) {
-    lineCoord.controlPoints[0].x < 0
-      ? groupedLineCoords[0].push(lineCoord)
-      : groupedLineCoords[1].push(lineCoord);
+function assignLabelToLeftOrRight(lines) {
+  const groupedLines = [[], []];
+  for (const line of lines) {
+    line.controlPoints[0].x < 0
+      ? groupedLines[0].push(line)
+      : groupedLines[1].push(line);
   }
-  return groupedLineCoords;
+  return groupedLines;
 }
 
 /**
  * Determine the final y coordinate of lables
- * @param {*} groupedLineCoords 
+ * @param {*} groupedLines 
  * @param {*} labelHeight 
  */
-function stackAccordingToOrder(groupedLineCoords, labelHeight) {
+function stackAccordingToOrder(groupedLines, labelHeight) {
   const horizontalMargin = 60;
   const verticalMargin = 1;
   labelHeight = labelHeight + (verticalMargin >> 1);
   const halfLabelHeight = labelHeight >> 1;
 
-  const leftCoords = groupedLineCoords[0];
-  const leftStackHeight = leftCoords.length * labelHeight;
+  const leftLines = groupedLines[0];
+  const leftStackHeight = leftLines.length * labelHeight;
   const leftX = - horizontalMargin;
   const leftStartY = - (leftStackHeight >> 1);
-  for (let i = 0; i < leftCoords.length; i++) {
-    const coord = leftCoords[i];
-    coord.controlPoints.push({
+  for (let i = 0; i < leftLines.length; i++) {
+    const line = leftLines[i];
+    line.controlPoints.push({
       x: leftX,
       y: leftStartY + i * labelHeight + halfLabelHeight,
     });
   }
 
-  const rightCoords = groupedLineCoords[1];
-  const rightStackHeight = rightCoords.length * labelHeight;
+  const rightLines = groupedLines[1];
+  const rightStackHeight = rightLines.length * labelHeight;
   const rightX = horizontalMargin;
   const rightStartY = (rightStackHeight >> 1);
-  for (let i = 0; i < rightCoords.length; i++) {
-    const coord = rightCoords[i];
-    coord.controlPoints.push({
+  for (let i = 0; i < rightLines.length; i++) {
+    const line = rightLines[i];
+    line.controlPoints.push({
       x: rightX,
       y: rightStartY - i * labelHeight - halfLabelHeight,
     });
@@ -295,22 +296,22 @@ function stackAccordingToOrder(groupedLineCoords, labelHeight) {
 
 /**
  * Labels are aligned left, move them horizontally according to the x coordination of dots.
- * @param {*} groupedLineCoords 
+ * @param {*} groupedLines 
  */
-function moveHorizontallyAccordingToXCoord(groupedLineCoords) {
+function moveHorizontallyAccordingToXCoord(groupedLines) {
   const spaceToMove = 20;
   const comparator = (line1, line2) => line1.controlPoints[0].x - line2.controlPoints[0].x;
-  const sortedGroupedLineCoords = groupedLineCoords.map(lineCoords => lineCoords.sort(comparator));
-  const [stepNumLeft, stepNumRight] = sortedGroupedLineCoords.map(
-    lineCoords => _.uniq(lineCoords.map(lineCoord => lineCoord.controlPoints[0].x)).length
+  const sortedgroupedLines = groupedLines.map(lines => lines.sort(comparator));
+  const [stepNumLeft, stepNumRight] = sortedgroupedLines.map(
+    lines => _.uniq(lines.map(line => line.controlPoints[0].x)).length
   );
   const stepLeft = spaceToMove / stepNumLeft;
   const stepRight = spaceToMove / stepNumRight;
 
   let i = -1;
   let xBefore;
-  for (const lineCoord of sortedGroupedLineCoords[0]) {
-    const controlPoints = lineCoord.controlPoints;
+  for (const line of sortedgroupedLines[0]) {
+    const controlPoints = line.controlPoints;
     const firstPoint = _.head(controlPoints);
     const lastPoint = _.last(controlPoints);
     if (firstPoint.x !== xBefore) {
@@ -322,8 +323,8 @@ function moveHorizontallyAccordingToXCoord(groupedLineCoords) {
 
   i = stepNumRight;
   xBefore = undefined;
-  for (const lineCoord of sortedGroupedLineCoords[1]) {
-    const controlPoints = lineCoord.controlPoints;
+  for (const line of sortedgroupedLines[1]) {
+    const controlPoints = line.controlPoints;
     const firstPoint = _.head(controlPoints);
     const lastPoint = _.last(controlPoints);
     if (firstPoint.x !== xBefore) {
@@ -336,14 +337,14 @@ function moveHorizontallyAccordingToXCoord(groupedLineCoords) {
 }
 
 
-function renderLabels(root, groupedLineCoords, fontSize) {
+function renderLabels(root, groupedLines, fontSize) {
   const strokeWidth = "1px";
 
   const groupLeft = root.append('g').attr("class", "left")
   const groupRight = root.append('g').attr("class", "right")
 
   groupLeft.selectAll("g")
-    .data(groupedLineCoords[0])
+    .data(groupedLines[0])
     .join("g")
     .attr("class", d => d.label)
     .each(function (d, i) {
@@ -365,7 +366,7 @@ function renderLabels(root, groupedLineCoords, fontSize) {
     })
 
   groupRight.selectAll("g")
-    .data(groupedLineCoords[1])
+    .data(groupedLines[1])
     .join("g")
     .attr("class", d => d.label)
     .each(function (d, i) {
@@ -424,7 +425,7 @@ function translateLabels(root) {
 
 }
 
-function renderLines(root, groupedLineCoords) {
+function renderLines(root, groupedLines) {
   const strokeWidth = "1px";
 
   const lineGenerator = d3.line().x(d => d.x).y(d => d.y);
@@ -433,7 +434,7 @@ function renderLines(root, groupedLineCoords) {
 
   [groupLeft, groupRight].map(
     (g, i) => g.selectAll("path")
-      .data(groupedLineCoords[i])
+      .data(groupedLines[i])
       .join("g")
       .attr("class", d => d.label)
       .each(function (d, i) {
