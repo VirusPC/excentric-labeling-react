@@ -269,29 +269,23 @@ function stackAccordingToOrder(groupedLines, labelHeight) {
   labelHeight = labelHeight + (verticalMargin >> 1);
   const halfLabelHeight = labelHeight >> 1;
 
-  const leftLines = groupedLines[0];
-  const leftStackHeight = leftLines.length * labelHeight;
-  const leftX = - horizontalMargin;
-  const leftStartY = - (leftStackHeight >> 1);
-  for (let i = 0; i < leftLines.length; i++) {
-    const line = leftLines[i];
-    line.controlPoints.push({
-      x: leftX,
-      y: leftStartY + i * labelHeight + halfLabelHeight,
-    });
-  }
+  groupedLines.forEach((lines, i) => {
+    const stackHeight = lines.length * labelHeight;
+    const startX = i === 0 ? -horizontalMargin : horizontalMargin;
+    const startY = - (stackHeight >> 1);
+    lines.forEach((line, i) => line.controlPoints.push({
+      x: startX,
+      y: startY + i * labelHeight + halfLabelHeight,
+    }));
 
-  const rightLines = groupedLines[1];
-  const rightStackHeight = rightLines.length * labelHeight;
-  const rightX = horizontalMargin;
-  const rightStartY = (rightStackHeight >> 1);
-  for (let i = 0; i < rightLines.length; i++) {
-    const line = rightLines[i];
-    line.controlPoints.push({
-      x: rightX,
-      y: rightStartY - i * labelHeight - halfLabelHeight,
-    });
-  }
+    // for (let i = 0; i < lines.length; i++) {
+    //   const line = lines[i];
+    //   line.controlPoints.push({
+    //     x: startX,
+    //     y: startY + i * labelHeight + halfLabelHeight,
+    //   });
+    // }
+  });
 }
 
 /**
@@ -303,7 +297,7 @@ function moveHorizontallyAccordingToXCoord(groupedLines) {
   const comparator = (line1, line2) => line1.controlPoints[0].x - line2.controlPoints[0].x;
   const sortedgroupedLines = groupedLines.map(lines => lines.sort(comparator));
   const [stepNumLeft, stepNumRight] = sortedgroupedLines.map(
-    lines => _.uniq(lines.map(line => line.controlPoints[0].x)).length
+    lines => _.sortedUniq(lines.map(line => line.controlPoints[0].x)).length
   );
   const stepLeft = spaceToMove / stepNumLeft;
   const stepRight = spaceToMove / stepNumRight;
