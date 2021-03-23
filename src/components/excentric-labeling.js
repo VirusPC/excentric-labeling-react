@@ -218,12 +218,13 @@ function computeOrderingAccordingToRad(lines) {
   const rotateAQuarter = rad => rad - quarterRad;
 
   lines.forEach((line) => {
-    const [radAjusted] = [line.rad]
+    const [radAjusted] = _.chain([line.rad])
       .map(negativeToPositive)
       .map(reverse)
       .map(negativeToPositive)
       .map(rotateAQuarter)
-      .map(negativeToPositive);
+      .map(negativeToPositive)
+      .value();
     line.radAjusted = radAjusted;
   });
   const comparator = (line1, line2) => {
