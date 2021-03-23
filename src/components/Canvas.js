@@ -18,14 +18,15 @@ export default class Canvas extends Component {
   componentDidMount = () => {
     const { width } = this.props;
     const rootElem = this.root.current;
-    renderUsingD3(rootElem, width, width * 0.6, this.extractInteractionParams(this.props));
+    renderUsingD3(rootElem, width, width * 0.6, this.extractInteractionParams(this.props), this.extractSetStateFuncs(this.props) );
   }
 
   shouldComponentUpdate = (props, state) => {
     if(this.props.fontSize === props.fontSize 
         && this.props.lensRadius === props.lensRadius
         && this.props.maxLabelsNum === props.maxLabelsNum
-        && JSON.stringify(this.props.checkedOptions) === JSON.stringify(props.checkedOptions)){
+        && this.props.shouldVerticallyCoherent === props.shouldVerticallyCoherent
+        && this.props.shouldHorizontallyCoherent === props.shouldHorizontallyCoherent){
       return false;
     } 
     return true;
@@ -36,30 +37,27 @@ export default class Canvas extends Component {
     const { width } = this.props;
     const rootElem = this.root.current;
     d3.select(rootElem).selectAll(":root *").remove();
-    renderUsingD3(rootElem, width, width * 0.6, this.extractInteractionParams(this.props));
+    renderUsingD3(rootElem, width, width * 0.6, this.extractInteractionParams(), this.extractSetStateFuncs());
   }
 
-  setCurLabel = (value) => {
-    const setCurLabel= this.props.setCurLabel;
-    setCurLabel(value);
-  }
-
-  setRandomLabel = (value) => {
-    const setRandomLabel= this.props.setRadomLabel;
-    setRandomLabel(value);
-  }
-
-  extractInteractionParams(props) {
-    const {fontSize, lensRadius, maxLabelsNum, checkedOptions} = props;
+  extractInteractionParams() {
+    const {fontSize, lensRadius, maxLabelsNum, shouldVerticallyCoherent, shouldHorizontallyCoherent} = this.props;
     return {
       fontSize: fontSize, 
       lensRadius: lensRadius, 
       maxLabelsNum: maxLabelsNum,
-      checkedOptions: checkedOptions,
-      setCurLabel: this.setCurLabel, 
-      setRandomLabel: this.setRandomLabel
+      shouldVerticallyCoherent: shouldVerticallyCoherent,
+      shouldHorizontallyCoherent: shouldHorizontallyCoherent,
     }
   }
 
+  extractSetStateFuncs() {
+    const {setCurLabel, setRandomLabel} = this.props;
+    const result = {
+      setCurLabel: setCurLabel,
+      setRandomLabel: setRandomLabel,
+    }
+    return result;
+  }
 
 }

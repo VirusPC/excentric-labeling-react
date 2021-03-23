@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { Slider, Typography, Input, Row, Col, Checkbox } from 'antd'
 import Canvas from "./components/Canvas"
 import _ from 'lodash'
-import {OPTIONS} from "./components/excentric-labeling"
 import 'antd/dist/antd.css'
 import "./App.css"
 
-const { Title, Text } = Typography;
+const OPTIONS = [
+  "Vertically Coherent Labeling",
+  "Horizontally Coherent Labeling"
+];
 
-//const sliderStyle = { display: "inline-block" };
+const { Title, Text } = Typography;
 
 const width = 800;
 const height = 1000;
@@ -40,8 +42,6 @@ const sliderParams = {
   }
 };
 
-const options = []
-
 for (const paramName in sliderParams) {
   const param = sliderParams[paramName];
   _.range(param.min, param.max + 1, param.step)
@@ -54,7 +54,7 @@ function App() {
   const [lensRadius, setLensRadius] = useState(sliderParams.lensRadius.default);
   const [maxLabelsNum, setMaxLabelsNum] = useState(sliderParams.labelsNum.default);
   const [curLabel, setCurLabel] = useState("");
-  const [randomLabel, setRadomLabel] = useState("");
+  const [randomLabel, setRandomLabel] = useState("");
 
   const [checkedOptions, setCheckedOptions] = useState([]);
 
@@ -135,8 +135,9 @@ function App() {
             lensRadius={lensRadius} 
             maxLabelsNum={maxLabelsNum}
             setCurLabel={setCurLabel} 
-            setRadomLabel={setRadomLabel}
-            checkedOptions={checkedOptions}
+            setRandomLabel={setRandomLabel}
+            shouldVerticallyCoherent={checkedOptions.find((option) => option === OPTIONS[0])}
+            shouldHorizontallyCoherent={checkedOptions.find((option) => option === OPTIONS[1])}
           ></Canvas>
         </Col>
       </Row>

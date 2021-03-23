@@ -1,11 +1,5 @@
-import { convertLegacyProps } from "antd/lib/button/button";
 import * as d3 from "d3";
-import _, { filter, first, forEach, last } from "lodash";
-
-export const OPTIONS = [
-  "Vertically Coherent Labeling",
-  "Horizontally Coherent Labeling"
-];
+import _ from "lodash";
 
 /**
  * Add excentric labeling interaction to the root element. 
@@ -15,21 +9,25 @@ export const OPTIONS = [
  * @param {number} height 
  * 
  * @param {object} coordinates
- * @param {number} coordinates.x
- * @param {number} coordinates.y
- * @param {string} coordinates.label
- * @param {string} coordinates.color
+ * @param {number} coordinates.x used for calculate position information.
+ * @param {number} coordinates.y used for calculate position information.
+ * @param {string} coordinates.label used for set the label text content.
+ * @param {string} coordinates.color used for set the color of labels corresponding lines.
  * 
- * @param {object} interactionParams 
- * @param {string | number} interactionParams.lensRadius 
- * @param {string | number} interactionParams.fontSize
- * @param {string | number} interactionParams.maxLabelsNum
- * @param {string[]} interactionParams.checkedOptions
- * @param {Function} interactionParams.setCurLabel
- * @param {Function} interactionParams.setRandomLabel
+ * @param {object} interactionParams some parameters can be adjusted.
+ * @param {string | number} interactionParams.lensRadius the radius of lens.
+ * @param {string | number} interactionParams.fontSize the font size of all texts.
+ * @param {string | number} interactionParams.maxLabelsNum how many labels can be showed at ones at most. 
+ * @param {boolean} interactionParams.shouldVerticallyCoherent open the function: vertically coherent labeling.
+ * @param {boolean} interactionParams.shouldHorizontallyCoherent open the function: horizontally coherent labeling.
+ * 
+ * @param {object} setStateFuncs some setState functions, which can set take effect outsides.
+ * @param {(currentlabel: string) => void} setStateFuncs.setCurLabel 
+ * @param {(randowmLabel: string) => void} setStateFuncs.setRandomLabel
  */
-export default function addExcenricLabelingInteraction(root, width, height, coordinates, interactionParams) {
-  const { lensRadius, fontSize, maxLabelsNum, setCurLabel, setRandomLabel, checkedOptions } = interactionParams;
+export default function addExcentricLabelingInteraction(root, width, height, coordinates, interactionParams, setStateFuncs) {
+  const { lensRadius, fontSize, maxLabelsNum, shouldVerticallyCoherent, shouldHorizontallyCoherent } = interactionParams;
+  const { setCurLabel, setRandomLabel} = setStateFuncs;
   const strokeColor = "green",
     strokeWidth = "1px",
     countLabelWidth = 30,
@@ -100,7 +98,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     filteredCoords = filteredCoords.slice(0, +maxLabelsNum);
 
     let orderedLineCoords
-    if (checkedOptions.find(option => option === OPTIONS[0])) {
+    if (shouldVerticallyCoherent) {
       orderedLineCoords = computeOrderingAccordingToY(filteredCoords);
     } else {
       filteredCoords.forEach((coord) => computeRad(coord));
@@ -110,7 +108,7 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     const groupedLineCoords = assignLabelToLeftOrRight(orderedLineCoords);
     stackAccordingToOrder(groupedLineCoords, countLabelBoundingClientRect.height);
 
-    if (checkedOptions.find(option => option === OPTIONS[1])) {
+    if (shouldHorizontallyCoherent) {
       moveHorizontallyAccordingToXCoord(groupedLineCoords)
     }
 
@@ -121,7 +119,6 @@ export default function addExcenricLabelingInteraction(root, width, height, coor
     computeTranslatedControlPoint(groupLabels);
     translateLabels(groupLabels);
     renderLines(groupLabels, groupedLineCoords);
-
 
     setCurLabel(nearestLabel)
     setRandomLabel(randomLabel)
@@ -161,7 +158,6 @@ function extractLabelAndPosition(coordinates, radius) {
     randomLabel = filteredCoords[Math.floor(Math.random() * (filteredCoords.length - 1))].label
   };
 
-  console.log(filteredCoords)
   return { filteredCoords: filteredCoords, nearestLabel: nearestLabel, randomLabel: randomLabel };
 }
 
@@ -310,14 +306,13 @@ function moveHorizontallyAccordingToXCoord(groupedLineCoords) {
   );
   const stepLeft = spaceToMove / stepNumLeft;
   const stepRight = spaceToMove / stepNumRight;
-  console.log("s", sortedGroupedLineCoords);
 
   let i = -1;
   let xBefore;
   for (const lineCoord of sortedGroupedLineCoords[0]) {
     const controlPoints = lineCoord.controlPoints;
-    const firstPoint = controlPoints[0];
-    const lastPoint = controlPoints[controlPoints.length - 1];
+    const firstPoint = _.head(controlPoints);
+    const lastPoint = _.last(controlPoints);
     if (firstPoint.x !== xBefore) {
       xBefore = firstPoint.x;
       i++;
@@ -329,8 +324,8 @@ function moveHorizontallyAccordingToXCoord(groupedLineCoords) {
   xBefore = undefined;
   for (const lineCoord of sortedGroupedLineCoords[1]) {
     const controlPoints = lineCoord.controlPoints;
-    const firstPoint = controlPoints[0];
-    const lastPoint = controlPoints[controlPoints.length - 1];
+    const firstPoint = _.head(controlPoints);
+    const lastPoint = _.last(controlPoints);
     if (firstPoint.x !== xBefore) {
       xBefore = firstPoint.x;
       i--;

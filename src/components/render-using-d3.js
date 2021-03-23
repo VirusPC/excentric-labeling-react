@@ -1,21 +1,25 @@
 import * as d3 from 'd3'
 import data from "../data/cars.json"
-import addExcenricLabelingInteraction  from "./excentric-labeling"
+import addExcentricLabelingInteraction  from "./excentric-labeling"
 
 /**
  * 
  * @param {HTMLDivElement} rootElem
  * @param {number} width 
  * @param {number} height 
+ * 
  * @param {object} interactionParams
  * @param {string | number} interactionParams.lensRadius 
  * @param {string | number} interactionParams.fontSize
  * @param {string | number} interactionParams.maxLabelsNum
- * @param {string[]} interactionParams.checkedOptions
- * @param {Function} interactionParams.setCurLabel
- * @param {Function} interactionParams.setRandomLabel
+ * @param {boolean} interactionParams.shouldVerticallyCoherent open the function: vertically coherent labeling.
+ * @param {boolean} interactionParams.shouldHorizontallyCoherent open the function: horizontally coherent labeling.
+ * 
+ * @param {object} setStateFuncs some setState functions, which can set take effect outsides.
+ * @param {(currentlabel: string) => void} setStateFuncs.setCurLabel 
+ * @param {(randowmLabel: string) => void} setStateFuncs.setRandomLabel
  */
-export default function renderUsingD3(rootElem, width, height, interactionParams) {
+export default function renderUsingD3(rootElem, width, height, interactionParams, setStateFuncs) {
 
   // fields of scatter plot
   const fieldX = "Horsepower";
@@ -35,10 +39,10 @@ export default function renderUsingD3(rootElem, width, height, interactionParams
     .attr("viewbox", `0 0 ${width} ${height}`)
   const g = svg.append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  renderScatterPlot(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams);
+  renderScatterPlot(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs);
 }
 
-function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor, interactionParams) {
+function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs) {
   // settings
   const radius = 3;
 
@@ -123,7 +127,7 @@ function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor
 
   groupLegends.call(renderLegends, margin.right, height + margin.top + margin.left, fieldColor, scaleColor);
 
-  groupForeground.call(addExcenricLabelingInteraction, width, height, coordinatesWithInfo, interactionParams);
+  groupForeground.call(addExcentricLabelingInteraction, width, height, coordinatesWithInfo, interactionParams, setStateFuncs);
 }
 
 function renderLegends(root, width, height, field, scaleColor) {
