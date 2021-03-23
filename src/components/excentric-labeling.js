@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import { line } from "d3";
 import _ from "lodash";
 
 /**
@@ -217,12 +218,13 @@ function computeOrderingAccordingToRad(lines) {
   const rotateAQuarter = rad => rad - quarterRad;
 
   lines.forEach((line) => {
-    [line.rad]
+    const [radAjusted] = [line.rad]
       .map(negativeToPositive)
       .map(reverse)
       .map(negativeToPositive)
       .map(rotateAQuarter)
       .map(negativeToPositive);
+    line.radAjusted = radAjusted;
   });
   const comparator = (line1, line2) => {
     return line1.radAjusted - line2.radAjusted;
@@ -238,7 +240,20 @@ function computeOrderingAccordingToRad(lines) {
  */
 function computeOrderingAccordingToY(lines) {
   const comparator = (line1, line2) => {
-    return line1.controlPoints[0].y - line2.controlPoints[0].y
+    const point1 = line1.controlPoints[0];
+    const point2 = line2.controlPoints[0];
+    const product = point1.x * point2.x;
+    if(product < 0) {
+      return point1.x < 0 ? -1 : 1;
+    } else if(product > 0) {
+      return point1.x < 0 ? point1.y - point2.y : point2.y - point1.y;
+    } else {
+      return point1.y < 0 
+        ? -1 
+        : point2.x < 0
+          ? -1
+          : 1;
+    }
   }
   return lines.sort(comparator);
 }
@@ -264,6 +279,7 @@ function assignLabelToLeftOrRight(lines) {
  * @param {*} labelHeight 
  */
 function stackAccordingToOrder(groupedLines, labelHeight) {
+  console.log(groupedLines);
   const horizontalMargin = 60;
   const verticalMargin = 1;
   labelHeight = labelHeight + (verticalMargin >> 1);
@@ -271,20 +287,13 @@ function stackAccordingToOrder(groupedLines, labelHeight) {
 
   groupedLines.forEach((lines, i) => {
     const stackHeight = lines.length * labelHeight;
-    const startX = i === 0 ? -horizontalMargin : horizontalMargin;
-    const startY = - (stackHeight >> 1);
+    const direction = i === 0 ? -1 : 1;
+    const startX = direction * horizontalMargin;
+    const startY = direction * (stackHeight >> 1);
     lines.forEach((line, i) => line.controlPoints.push({
       x: startX,
-      y: startY + i * labelHeight + halfLabelHeight,
+      y: startY - direction * ((i * labelHeight) + halfLabelHeight),
     }));
-
-    // for (let i = 0; i < lines.length; i++) {
-    //   const line = lines[i];
-    //   line.controlPoints.push({
-    //     x: startX,
-    //     y: startY + i * labelHeight + halfLabelHeight,
-    //   });
-    // }
   });
 }
 
