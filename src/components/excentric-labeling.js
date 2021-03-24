@@ -1,5 +1,4 @@
 import * as d3 from "d3";
-import { line } from "d3";
 import _ from "lodash";
 
 /**
@@ -122,8 +121,8 @@ export default function addExcentricLabelingInteraction(root, width, height, poi
     renderLines(groupLabels, groupedLines);
 
     // side effects
-    setCurLabel(nearestLabel)
-    setRandomLabel(randomLabel)
+    if(setCurLabel) setCurLabel(nearestLabel)
+    if(setRandomLabel) setRandomLabel(randomLabel)
   }
 
   function onMouseleave(e) {
