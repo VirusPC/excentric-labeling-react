@@ -16,7 +16,7 @@ import _ from "lodash";
  * 
  * @param {object} interactionParams some parameters can be adjusted.
  * @param {string | number} interactionParams.lensRadius the radius of lens.
- * @param {string | number} interactionParams.fontSize the font size of all texts.
+ iiｉ* @param {string | number} interactionParams.fontSize the font size of all texts.
  * @param {string | number} interactionParams.maxLabelsNum how many labels can be showed at ones at most. 
  * @param {boolean} interactionParams.shouldVerticallyCoherent open the function: vertically coherent labeling.
  * @param {boolean} interactionParams.shouldHorizontallyCoherent open the function: horizontally coherent labeling.
@@ -409,7 +409,7 @@ function computeTranslatedControlPoint(root) {
   groupItems.each(function (d, i) {
     const g = d3.select(this);
     const text = g.select("text")
-    const { width, height } = text.node().getBoundingClientRect();
+    const { width} = text.node().getBoundingClientRect();
     const offset = width - maxLabelWidth
     const lastControlPoint = d.controlPoints[d.controlPoints.length - 1];
     const newControlPoint = { x: lastControlPoint.x + offset, y: lastControlPoint.y };
