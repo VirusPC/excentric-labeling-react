@@ -39,10 +39,10 @@ export default function renderUsingD3(rootElem, width, height, interactionParams
     .attr("viewbox", `0 0 ${width} ${height}`)
   const g = svg.append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  renderScatterPlot(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs);
+  renderScatterPlotWithExcentricLabeling(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs);
 }
 
-function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs) {
+function renderScatterPlotWithExcentricLabeling(root, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs) {
   // settings
   const radius = 3;
 
@@ -119,6 +119,7 @@ function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor
     .data(coordinatesWithInfo)
     .join("circle")
     .attr("fill", "none")
+    .attr("opacity", 0.7)
     .attr("stroke-width", 1)
     .attr("stroke", d => d["color"])
     .attr("cx", d => d["x"])
