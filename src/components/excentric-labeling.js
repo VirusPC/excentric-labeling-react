@@ -43,7 +43,7 @@ export default function addExcentricLabelingInteraction(
   height,
   points,
   interactionParams,
-  setStateFuncs
+  setStateFuncs = {}
 ) {
   const {
     lensRadius,
