@@ -8,14 +8,16 @@ import excentricLabeling from "excentric-labeling";
  * Add excentric labeling interaction to the root element. 
  * 
  * @typedef {Object} Point - point
- * @property {number} points.x - used for calculate position information.
- * @property {number} points.y - used for calculate position information.
- * @property {string} points.label - used for set the label text content.
- * @property {string} points.color - used for set the color of labels corresponding lines.
+ * @property {number} x - used for calculate position information.
+ * @property {number} y - used for calculate position information.
+ * @property {string} label - used for set the label text content.
+ * @property {string} color - used for set the color of labels corresponding lines.
  * 
  * @typedef {Object} RawInfo - object passed to excentric labeling computer
- * @property {number} points.x - used for calculate position information.
- * @property {number} points.y - used for calculate position information.
+ * @property {number} x - used for calculate position information.
+ * @property {number} y - used for calculate position information.
+ * @property {string} label - used for set the label text content.
+ * @property {string} color - used for set the color of labels corresponding lines.
  * @property {number} labelWidth - width of the corresponding label
  * @property {number} labelHeight - height of the corresponding label
  * 
@@ -26,7 +28,7 @@ import excentricLabeling from "excentric-labeling";
  * @param {Point[]} points
  * @param {object} interactionParams some parameters can be adjusted.
  * @param {string | number} interactionParams.lensRadius the radius of lens.
- iiｉ* @param {string | number} interactionParams.fontSize the font size of all texts.
+ * @param {string | number} interactionParams.fontSize the font size of all texts.
  * @param {string | number} interactionParams.maxLabelsNum how many labels can be showed at ones at most. 
  * @param {boolean} interactionParams.shouldVerticallyCoherent open the function: vertically coherent labeling.
  * @param {boolean} interactionParams.shouldHorizontallyCoherent open the function: horizontally coherent labeling.
