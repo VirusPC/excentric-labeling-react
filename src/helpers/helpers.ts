@@ -56,15 +56,3 @@ export function nearestPoint(center: Point, points: Point[]) {
 function distance(point1: Point, point2: Point) {
   return Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
 }
-
-export function randomPoint(points: Point[]) {
-  if (points.length <= 0) return;
-  const randomIndex = getRandomIntInclusive(0, points.length - 1);
-  return points[randomIndex];
-}
-
-function getRandomIntInclusive(min: number, max: number) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
-}

@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import excentricLabeling from "excentric-labeling";
 import { renderLens, renderBBoxs, renderTexts, renderLines } from "./render";
-import { computeSizeOfLabels, nearestPoint, randomPoint } from "./helpers";
+import { computeSizeOfLabels, nearestPoint } from "./helpers";
 
 type InteractionParams = {
   lensRadius: number,  // the radius of lens
@@ -28,9 +28,8 @@ export default function addExcentricLabelingInteraction(
   height: number,
   points: RawInfo[],
   interactionParams: InteractionParams,
-  setStateFuncs: {
-    setCurLabel?: (currentlabel: string) => void,
-    setRandomLabel?: (randowmLabel: string) => void
+  listeners: {
+    onMove?: (selectedRawInfos: RawInfo[], nearest: RawInfo|undefined) => void;
   } = {}
 ) {
   const {
@@ -40,7 +39,7 @@ export default function addExcentricLabelingInteraction(
     shouldVerticallyCoherent,
     shouldHorizontallyCoherent,
   } = interactionParams;
-  const { setCurLabel, setRandomLabel } = setStateFuncs;
+  const { onMove } = listeners;
 
   const groupTooltip = root
     .append("g")
@@ -85,12 +84,10 @@ export default function addExcentricLabelingInteraction(
     renderTexts(groupLabels, layoutInfos, fontSize);
 
     /** @type {PointWithInfo[]} */
-    const selectedPoints = layoutInfos.map(li => li.rawInfo);
+    const selectedPoints = layoutInfos.map(li => li.rawInfo) as RawInfo[];
     const np = nearestPoint({ x, y }, selectedPoints) as RawInfo;
-    const rp = randomPoint(selectedPoints) as RawInfo;
     // side effects
-    if (setCurLabel) setCurLabel(np?.label ?? "")
-    if (setRandomLabel) setRandomLabel(rp?.label ?? "")
+    onMove && onMove(selectedPoints, np);
   }
 
   function onMouseleave(e: MouseEvent) {

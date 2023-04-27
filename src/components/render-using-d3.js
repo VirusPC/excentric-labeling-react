@@ -1,7 +1,7 @@
 import * as d3 from 'd3'
 import data from "../data/cars.json"
 import {addExcentricLabelingInteraction, computeSizeOfLabels}  from "../helpers";
-import { renderAxes, renderLegends } from './render-helper';
+import { renderAxes, renderLegends, randomPoint } from './helper';
 
 /**
  * 
@@ -37,7 +37,14 @@ export default function renderUsingD3(rootElem, width, height, interactionParams
   const {mainLayer, coordinatesWithInfo} = renderScatterPlotWithExcentricLabeling(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs);
   // interaction
   const rawInfos = getRawInfos(coordinatesWithInfo, svg, interactionParams.fontSize);
-  addExcentricLabelingInteraction(mainLayer, width, height, rawInfos, interactionParams, setStateFuncs);
+
+  addExcentricLabelingInteraction(mainLayer, width, height, rawInfos, interactionParams, {
+    onMove: (rawInfos, nearest) => {
+      const rp = randomPoint(rawInfos);
+      setStateFuncs.setCurLabel(nearest.label);
+      setStateFuncs.setRandomLabel(rp.label);
+    }
+  });
 }
 
 /**

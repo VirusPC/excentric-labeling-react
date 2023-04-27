@@ -96,3 +96,15 @@ export function renderLegends(root, width, height, field, scaleColor) {
     .attr("cy", (d) => scaleY(d))
     .attr("r", radius);
 }
+
+export function randomPoint(points) {
+  if (points.length <= 0) return;
+  const randomIndex = getRandomIntInclusive(0, points.length - 1);
+  return points[randomIndex];
+}
+
+function getRandomIntInclusive(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
+}
