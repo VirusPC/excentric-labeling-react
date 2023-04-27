@@ -41,8 +41,8 @@ export default function renderUsingD3(rootElem, width, height, interactionParams
   addExcentricLabelingInteraction(mainLayer, width, height, rawInfos, interactionParams, {
     onMove: (rawInfos, nearest) => {
       const rp = randomPoint(rawInfos);
-      setStateFuncs.setCurLabel(nearest.label);
-      setStateFuncs.setRandomLabel(rp.label);
+      setStateFuncs.setCurLabel(nearest?.label || "");
+      setStateFuncs.setRandomLabel(rp?.label || "");
     }
   });
 }

@@ -73,9 +73,9 @@ export default function addExcentricLabelingInteraction(
 
   function onMousemove(e: MouseEvent) {
     const [x, y] = d3.pointer(e, groupOverlay.node());
-    // const mouseCoordinate = { x: mousePosition[0], y: mousePosition[1] };
 
-    const layoutInfos = computer(points, x, y, false);
+    const layoutInfos = computer(points, x, y);
+    console.log(layoutInfos);
 
     groupLabels.selectAll("*").remove();
     updateLens({ x, y, itemNum: computer.elementsNumInLens() });
@@ -85,7 +85,7 @@ export default function addExcentricLabelingInteraction(
 
     /** @type {PointWithInfo[]} */
     const selectedPoints = layoutInfos.map(li => li.rawInfo) as RawInfo[];
-    const np = nearestPoint({ x, y }, selectedPoints) as RawInfo;
+    const np = nearestPoint({ x, y }, selectedPoints) as RawInfo|undefined;
     // side effects
     onMove && onMove(selectedPoints, np);
   }
@@ -93,6 +93,14 @@ export default function addExcentricLabelingInteraction(
   function onMouseleave(e: MouseEvent) {
     groupTooltip.style("visibility", "hidden");
   }
+
+  // Todo: add listener
+  // function on(eventName: string, listener: () => void){
+
+  // }
+  // return {
+  //   on
+  // }
 }
 
 
