@@ -1,7 +1,14 @@
 import * as d3 from 'd3'
 import data from "../data/cars.json"
-import {addExcentricLabelingInteraction, computeSizeOfLabels}  from "../helpers";
+// import {addExcentricLabelingInteraction, computeSizeOfLabels}  from "excentric-labeling-interaction";
+import eli from "excentric-labeling-interaction";
+// import * as eli from "excentric-labeling-interaction";
 import { renderAxes, renderLegends, randomPoint } from './helper';
+
+
+const {addExcentricLabelingInteraction, computeSizeOfLabels} = eli;
+// console.log(addExcentricLabelingInteraction, computeSizeOfLabels);
+// console.log(eli.default.addExcentricLabelingInteraction);
 
 /**
  * 
@@ -34,7 +41,7 @@ export default function renderUsingD3(rootElem, width, height, interactionParams
     .attr("viewbox", `0 0 ${width} ${height}`)
   const g = svg.append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  const {mainLayer, coordinatesWithInfo} = renderScatterPlotWithExcentricLabeling(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs);
+  const {mainLayer, coordinatesWithInfo} = renderScatterPlot(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs);
   // interaction
   const rawInfos = getRawInfos(coordinatesWithInfo, svg, interactionParams.fontSize);
 
@@ -60,7 +67,7 @@ export default function renderUsingD3(rootElem, width, height, interactionParams
  * @param {*} setStateFuncs 
  * @returns {object} layer
  */
-function renderScatterPlotWithExcentricLabeling(root, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs) {
+function renderScatterPlot(root, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs) {
   // settings
   const radius = 3;
 

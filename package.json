@@ -1,5 +1,5 @@
 {
-  "name": "excentric-labeling",
+  "name": "excentric-labeling-react",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -9,7 +9,8 @@
     "@types/d3": "^7.4.0",
     "antd": "^4.14.0",
     "d3": "^6.6.0",
-    "excentric-labeling": "^3.0.3",
+    "excentric-labeling": "^3.0.4",
+    "excentric-labeling-interaction": "^0.0.1",
     "lodash": "^4.17.21",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
