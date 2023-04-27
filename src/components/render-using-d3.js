@@ -1,8 +1,7 @@
 import * as d3 from 'd3'
 import data from "../data/cars.json"
-import addExcentricLabelingInteraction  from "../helpers/excentric-labeling-interaction"
+import {addExcentricLabelingInteraction, computeSizeOfLabels}  from "../helpers";
 import { renderAxes, renderLegends } from './render-helper';
-import { computeSizeOfLabels } from '../helpers/helpers';
 
 /**
  * 
