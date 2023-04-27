@@ -1,26 +1,21 @@
 import * as d3 from 'd3'
 import data from "../data/cars.json"
-import addExcentricLabelingInteraction  from "./excentric-labeling"
+import {addExcentricLabelingInteraction, computeSizeOfLabels}  from "../helpers";
+import { renderAxes, renderLegends } from './render-helper';
 
 /**
+ * 
+
  * 
  * @param {HTMLDivElement} rootElem
  * @param {number} width 
  * @param {number} height 
- * 
- * @param {object} interactionParams
- * @param {string | number} interactionParams.lensRadius 
- * @param {string | number} interactionParams.fontSize
- * @param {string | number} interactionParams.maxLabelsNum
- * @param {boolean} interactionParams.shouldVerticallyCoherent open the function: vertically coherent labeling.
- * @param {boolean} interactionParams.shouldHorizontallyCoherent open the function: horizontally coherent labeling.
- * 
- * @param {object} setStateFuncs some setState functions, which can set take effect outsides.
+ * @param {import('../helpers/excentric-labeling-interaction').InteractionParams} interactionParams
+ * @param {object} setStateFuncs some React.js setState functions, which can set take effect outsides.
  * @param {(currentlabel: string) => void} setStateFuncs.setCurLabel 
  * @param {(randowmLabel: string) => void} setStateFuncs.setRandomLabel
  */
 export default function renderUsingD3(rootElem, width, height, interactionParams, setStateFuncs) {
-
   // fields of scatter plot
   const fieldX = "Horsepower";
   const fieldY = "Miles_per_Gallon";
@@ -39,9 +34,25 @@ export default function renderUsingD3(rootElem, width, height, interactionParams
     .attr("viewbox", `0 0 ${width} ${height}`)
   const g = svg.append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  renderScatterPlotWithExcentricLabeling(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs);
+  const {mainLayer, coordinatesWithInfo} = renderScatterPlotWithExcentricLabeling(g, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs);
+  // interaction
+  const rawInfos = getRawInfos(coordinatesWithInfo, svg, interactionParams.fontSize);
+  addExcentricLabelingInteraction(mainLayer, width, height, rawInfos, interactionParams, setStateFuncs);
 }
 
+/**
+ * 
+ * @param {d3.Selection} root 
+ * @param {number} width 
+ * @param {number} height 
+ * @param {*} data 
+ * @param {string} fieldX 
+ * @param {string} fieldY 
+ * @param {string} fieldColor 
+ * @param {import('../helpers/excentric-labeling-interaction').InteractionParams} interactionParams 
+ * @param {*} setStateFuncs 
+ * @returns {object} layer
+ */
 function renderScatterPlotWithExcentricLabeling(root, width, height, data, fieldX, fieldY, fieldColor, interactionParams, setStateFuncs) {
   // settings
   const radius = 3;
@@ -83,39 +94,23 @@ function renderScatterPlotWithExcentricLabeling(root, width, height, data, field
     label: d["Name"],
   }))
 
-  // groups
-  const groupAxisX = root.append("g")
-    .attr("class", "groupAxisX")
-    .attr("transform", `translate(${margin.left}, ${margin.top + height})`);
-  const groupAxisY = root.append("g")
-    .attr("class", "groupAxisY")
+  // layers
+  const mainLayer = root.append("g")
+    .attr("class", "mainLayer")
     .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  const groupMarks = root.append("g")
-    .attr("class", "groupMarks")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  const groupForeground = root.append("g")
-    .attr("class", "groupForeground")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`)
-  const groupLegends = root.append("g")
-    .attr("class", "groupLegends")
+  // const overlayLayer = mainLayer.clone();
+  // const overlayLayer = root.append("g")
+    // .attr("class", "overlayLayer")
+    // .attr("transform", `translate(${margin.left}, ${margin.top})`)
+  const axesLayer = root.append("g")
+    .attr("class", "axesLayer");
+  const legendsLayer = root.append("g")
+    .attr("class", "legendsLayer")
     .attr("transform", `translate(${margin.left + width}, ${margin.top})`)
+  
 
-  // draw
-  groupAxisX.call(d3.axisBottom(scaleX))
-    .call(g =>
-      g.selectAll(".tick line")
-        .clone()
-        .attr("stroke-opacity", 0.1)
-        .attr("y2", -height)
-    );
-  groupAxisY.call(d3.axisLeft(scaleY))
-    .call(g =>
-      g.selectAll(".tick line")
-        .clone()
-        .attr("stroke-opacity", 0.1)
-        .attr("x2", width)
-    );
-  groupMarks.selectAll("circle")
+  // rendering
+  mainLayer.selectAll("circle")
     .data(coordinatesWithInfo)
     .join("circle")
     .attr("fill", "none")
@@ -125,57 +120,29 @@ function renderScatterPlotWithExcentricLabeling(root, width, height, data, field
     .attr("cx", d => d["x"])
     .attr("cy", d => d["y"])
     .attr("r", radius)
+  axesLayer.call(renderAxes, width, height, margin, scaleX, scaleY);
+  legendsLayer.call(renderLegends, margin.right, height + margin.top + margin.left, fieldColor, scaleColor);
 
-  groupLegends.call(renderLegends, margin.right, height + margin.top + margin.left, fieldColor, scaleColor);
-
-  groupForeground.call(addExcentricLabelingInteraction, width, height, coordinatesWithInfo, interactionParams, setStateFuncs);
+  return {mainLayer, coordinatesWithInfo};
 }
 
-function renderLegends(root, width, height, field, scaleColor) {
-  // settings
-  const radius = 4;
 
-  // layout
-  const margin = { top: 10, right: 50, bottom: height / 6 * 5, left: 10 };
-  width -= margin.left + margin.right;
-  height -= margin.top + margin.bottom;
-
-  // data manipulation
-  const domain = scaleColor.domain();
-
-  //scale
-  const scaleY = d3.scalePoint()
-    .domain(domain)
-    .range([height, 0]);
-
-  // groups
-  const groupTitle = root.append("g")
-    .attr("class", "groupTitle")
-    .attr("transform", `translate(${margin.left + width}, ${5})`)
-  const groupAxisY = root.append("g")
-    .attr("class", "groupAxisY")
-    .attr("transform", `translate(${margin.left + width}, ${margin.top * 2})`)
-  const groupMarks = root.append("g")
-    .attr("class", "groupMarks")
-    .attr("transform", `translate(${margin.left}, ${margin.top * 2})`)
-
-
-  // draw
-  groupTitle.append("text")
-    .attr("text-anchor", "middle")
-    .text(field);
-  groupAxisY.call(d3.axisRight(scaleY))
-    .call(g =>
-      g.selectAll(".domain").remove()
-    );
-  groupMarks.selectAll("circle")
-    .data(domain)
-    .join("circle")
-    .attr("fill", "none")
-    .attr("stroke-width", 2)
-    .attr("stroke", d => scaleColor(d))
-    .attr("cx", width >> 1)
-    .attr("cy", d => scaleY(d))
-    .attr("r", radius);
+/**
+ * 
+ * @param {PointWithInfo[]} points 
+ * @param {d3.Selection} root 
+ * @param {number} fontSize
+ * @returns {RawInfo[]}
+ */
+function getRawInfos(points, root, fontSize) {
+  const rawInfos = points.map((point) => {
+    return {
+      ...point,
+      labelWidth: 0,
+      labelHeight: 0,
+    };
+  });
+  computeSizeOfLabels(rawInfos, root, fontSize);
+  return rawInfos;
 }
 
